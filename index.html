@@ -1172,7 +1172,7 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
 </div>
 
 <!-- Add Note Modal -->
-<div id="addNoteModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center;">
+<div id="addNoteModal" onclick="if(event.target===this) closeAddNoteModal();" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
   <div style="background:var(--bg-surface);border-radius:22px 22px 0 0;padding:22px 18px 40px;width:100%;max-width:600px;">
     <div style="font-weight:800;font-size:1rem;margin-bottom:14px;">Write a Note</div>
     <textarea id="noteTextInput" rows="5" placeholder="Write your note here..." style="width:100%;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-app);color:var(--text-main);padding:12px;font-size:.9rem;font-family:inherit;resize:none;"></textarea>
@@ -8058,13 +8058,15 @@ function renderNotesList(sub){
   all.forEach(n=>{ (byChap[n.chap]=byChap[n.chap]||[]).push(n); });
   let html = '';
   Object.keys(byChap).forEach(chap=>{
-    html += `<div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin:10px 0 6px;">${chap}</div>`;
+    html += `<div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--primary);margin:12px 0 6px;">${chap}</div>`;
     byChap[chap].forEach((n,i)=>{
       html += `<div class="note-card">
-        <div class="note-card-chap">${n.chap}</div>
-        <div class="note-card-text">${n.text}</div>
-        <div class="note-card-date">${n.date||''}</div>
-        <button class="note-card-del" onclick="deleteNote('${n.id}')">🗑</button>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;">
+          <div class="note-card-chap" style="margin-bottom:0;font-size:0.76rem;font-weight:800;color:var(--primary);flex:1;overflow-wrap:break-word;">${n.chap}</div>
+          <button class="note-card-del" onclick="deleteNote('${n.id}')" title="Delete Note">🗑️</button>
+        </div>
+        <div class="note-card-text" style="font-size:0.92rem;color:var(--text-main);line-height:1.5;margin-bottom:8px;">${n.text}</div>
+        <div class="note-card-date" style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">${n.date||''}</div>
       </div>`;
     });
   });
@@ -8138,22 +8140,22 @@ function deleteNote(id){
 let _qaSub = 'biology';
 
 function openQuickAccess(){
-  const m = document.getElementById('quickAccessModal','analyticsScreen');
+  const m = document.getElementById('quickAccessModal');
   if(!m) return;
   m.style.display = 'flex';
   _qaSub = 'biology';
-  document.querySelectorAll('.qa-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.qa-tab').forEach(t => t.classList.remove('active'));
   const tab = document.querySelector('.qa-tab');
   if(tab) tab.classList.add('active');
   renderQAContent('biology');
 }
 function closeQuickAccess(){
-  const m = document.getElementById('quickAccessModal','analyticsScreen');
+  const m = document.getElementById('quickAccessModal');
   if(m) m.style.display = 'none';
 }
 function switchQATab(sub){
   _qaSub = sub;
-  document.querySelectorAll('.qa-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.qa-tab').forEach(t => t.classList.remove('active'));
   const tab = document.querySelector(`.qa-tab[data-sub="${sub}"]`);
   if(tab) tab.classList.add('active');
   renderQAContent(sub);
@@ -8162,54 +8164,54 @@ function switchQATab(sub){
 function renderQAContent(sub){
   const wrap = document.getElementById('qaContent');
   if(!wrap) return;
-  const filename = FILE_MAP[sub];
-  wrap.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</div>';
-  fetch(filename).then(r=>r.json()).then(data=>{
-    let html = '';
-    let attempted = 0;
-    data.quiz_sets.forEach((set,idx)=>{
-      const rec = JSON.parse(localStorage.getItem(`_nc_${sub}_${idx}`)||'null');
-      if(!rec || !rec.completed) return;
-      attempted++;
-      const acc = rec.accuracy||0;
-      const acColor = acc>=80?'#10b981':acc>=60?'#3b82f6':acc>=40?'#f59e0b':'#ef4444';
-      html += `<div class="qa-set-card" onclick="showAnalyticsForQA('${sub}',${idx})">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div class="qa-set-name">${set.set_name||'Set '+(idx+1)}</div>
-          <div style="font-size:.8rem;font-weight:900;color:${acColor};">${acc}%</div>
-        </div>
-        <div class="qa-set-stats">
-          <span class="qa-stat c">✅ ${rec.correct||0}</span>
-          <span class="qa-stat w">❌ ${rec.wrong||0}</span>
-          <span class="qa-stat s">⏭ ${rec.skipped||0}</span>
-          <span class="qa-stat t">⏱ ${rec.timeTaken?Math.round(rec.timeTaken/60)+'m':'-'}</span>
-        </div>
-      </div>`;
-    });
-    if(!attempted) html = '<div style="text-align:center;padding:40px 20px;color:var(--text-muted);font-size:.88rem;">No sets attempted yet for '+SUB_LABELS[sub]+'.</div>';
-    wrap.innerHTML = html;
-  }).catch(()=>{
-    wrap.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Could not load data.</div>';
+  wrap.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Loading results...</div>';
+
+  const subsToCheck = sub === 'biology' ? ['botany', 'zoology'] : [sub];
+  let cardsHtml = '';
+  let totalAttempted = 0;
+
+  subsToCheck.forEach(s => {
+    // 1. Scan localStorage for all attempted sets in this subject
+    for (let idx = 0; idx < 150; idx++) {
+      const rec = JSON.parse(localStorage.getItem(`_nc_${s}_${idx}`) || 'null');
+      if (rec && rec.completed) {
+        totalAttempted++;
+        const qs = JSON.parse(localStorage.getItem(`_nq_${s}_${idx}`) || '[]');
+        const acc = rec.accuracy || 0;
+        const acColor = acc >= 80 ? '#10b981' : acc >= 60 ? '#3b82f6' : acc >= 40 ? '#f59e0b' : '#ef4444';
+        const setName = (qs && qs[0] && qs[0].set) ? qs[0].set : `${s.charAt(0).toUpperCase() + s.slice(1)} Set ${idx + 1}`;
+        const timeFormatted = rec.timeTaken ? (rec.timeTaken >= 60 ? `${Math.round(rec.timeTaken / 60)}m` : `${rec.timeTaken}s`) : '-';
+
+        cardsHtml += `
+          <div class="qa-set-card" onclick="showAnalyticsForQA('${s}', ${idx})" style="background:var(--bg-surface);border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div class="qa-set-name" style="font-weight:800;font-size:0.9rem;color:var(--text-main);">${setName}</div>
+              <div style="font-size:.85rem;font-weight:900;color:${acColor};background:${acColor}18;padding:2px 8px;border-radius:6px;">${acc}%</div>
+            </div>
+            <div class="qa-set-stats" style="display:flex;gap:12px;font-size:0.78rem;font-weight:700;color:var(--text-muted);">
+              <span style="color:#10b981;">✅ ${rec.correct || 0}</span>
+              <span style="color:#ef4444;">❌ ${rec.wrong || 0}</span>
+              <span>⏭ ${rec.skipped || 0}</span>
+              <span>⏱ ${timeFormatted}</span>
+            </div>
+          </div>
+        `;
+      }
+    }
   });
+
+  if (totalAttempted === 0) {
+    const subLabel = sub === 'biology' ? 'Biology (Botany / Zoology)' : sub.charAt(0).toUpperCase() + sub.slice(1);
+    cardsHtml = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);font-size:.88rem;">No completed tests found yet for ${subLabel}.<br><span style="font-size:0.78rem;">Complete any practice set to see your analytics here!</span></div>`;
+  }
+  
+  wrap.innerHTML = cardsHtml;
 }
 
 function showAnalyticsForQA(sub, idx){
   closeQuickAccess();
   curSubject = sub;
-  // Restore previous result
-  const rec = JSON.parse(localStorage.getItem(`_nc_${sub}_${idx}`)||'null');
-  const qs  = JSON.parse(localStorage.getItem(`_nq_${sub}_${idx}`)||'null');
-  const rs  = JSON.parse(localStorage.getItem(`_nr_${sub}_${idx}`)||'null');
-  if(!rec || !qs || !rs){ alert('No detailed data saved for this set.'); return; }
-  _activeSub = sub;
-  _activeSetIdx = idx;
-  _gameQs = qs;
-  _userResponses = rs;
-  _totalQ = qs.length;
-  _correct = rec.correct||0; _wrong = rec.wrong||0; _skipped = rec.skipped||0;
-  _sessionStart = Date.now() - (rec.timeTaken||0)*1000;
-  _buildResult({acc:rec.accuracy||0, neet:(_correct*4)-_wrong, avgSpeed:((rec.timeTaken||0)/(_totalQ||1)).toFixed(1), timeTaken:rec.timeTaken||0});
-  showScreen('resultScreen');
+  showAnalytics(idx);
 }
 
 /* ══════════ SET HISTORY MODAL ══════════ */
@@ -8301,7 +8303,7 @@ function renderFlashcards(qs, rs, containerId) {
 </div>
 
 <!-- ═══ QUICK ACCESS MODAL ═══ -->
-<div id="quickAccessModal" style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeQuickAccess()">
+<div id="quickAccessModal" onclick="if(event.target===this) closeQuickAccess();" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
   <div class="qa-sheet">
     <div class="qa-header">
       <div style="font-weight:900;font-size:1rem;">⚡ Quick Access — Results</div>
