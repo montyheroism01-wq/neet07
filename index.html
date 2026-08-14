@@ -6986,8 +6986,7 @@ function injectUploadedHTMLSets(subject, targetUnitName, targetSubchapter) {
               const idx = window.curSubjectData.quiz_sets.length;
               window.curSubjectData.quiz_sets.push(quizData);
 
-              const recKey = `_nc_${sub}_${idx}`;
-              const rec = getSetRecord(sub, globalIdx, set);
+              const rec = getSetRecord(sub, idx, quizData);
               const acc = rec?.accuracy || 0, correct = rec?.correct || 0, total = rec?.total || qCount;
               const isAttempted = !!(rec?.completed);
               let tCls='', tLbl='New', tbCls='';
@@ -7036,12 +7035,13 @@ function injectUploadedHTMLSets(subject, targetUnitName, targetSubchapter) {
               if(isAttempted){
                 card.querySelector('.set-card-top').onclick=()=>showAnalytics(idx);
                 const vBtn=card.querySelector('[data-viewidx]'); if(vBtn) vBtn.onclick=e=>{ e.stopPropagation(); showAnalytics(idx); };
-                const rBtn=card.querySelector('[data-retryidx]'); if(rBtn) rBtn.onclick=e=>{ e.stopPropagation(); startSetGame(window.curSubjectData.quiz_sets[idx],idx); };
+                const rBtn=card.querySelector('[data-retryidx]'); if(rBtn) rBtn.onclick=e=>{ e.stopPropagation(); startSetGame(quizData,idx); };
               } else {
-                card.onclick=()=>startSetGame(window.curSubjectData.quiz_sets[idx],idx);
+                card.onclick=()=>startSetGame(quizData,idx);
               }
 
               insertSortedSetCard(list, card, item.num);
+              renumberVisibleSetCards(list);
             }
           } catch(err) {
             console.error('Error parsing uploaded quiz data:', err);
