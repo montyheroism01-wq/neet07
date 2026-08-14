@@ -7063,15 +7063,15 @@ function searchCurrentQuestionOnGoogle() {
     }
     const q = _gameQs[_qIdx];
 
-    // 1. Extract Question Text safely across all question formats
+    // 1. Extract Question Text
     let rawQ = q.q || q.question || '';
     if (typeof rawQ !== 'string') rawQ = String(rawQ || '');
 
-    // Extract Diagram descriptions if present
+    // Extract Diagram description or alt text if present
     const altMatches = rawQ.match(/!\[(.*?)\]/g) || [];
     const altText = altMatches.map(a => a.replace(/[!\[\]]/g, '').trim()).filter(a => a && !['image', 'diagram'].includes(a.toLowerCase())).join(' ');
 
-    // Clean Question text: remove base64 data, markdown brackets, and HTML tags
+    // Clean Question text: remove base64 strings, markdown image tags, and HTML tags
     let cleanQ = rawQ
       .replace(/data:image\/[^;]+;base64,[a-zA-Z0-9+/=]+/g, ' ')
       .replace(/!\[.*?\]\([^)]+\)/g, ' ')
@@ -7079,35 +7079,34 @@ function searchCurrentQuestionOnGoogle() {
       .replace(/\s+/g, ' ')
       .trim();
 
-    // 2. Extract Options & Answer
-    const opts = q.opts || q.options || [];
-    const ansIdx = (typeof q.ans === 'number') ? q.ans : ((typeof q.answer === 'number') ? q.answer : -1);
-    let ansText = '';
-    if (ansIdx >= 0 && opts[ansIdx]) {
-      ansText = String(opts[ansIdx])
-        .replace(/data:image\/[^;]+;base64,[a-zA-Z0-9+/=]+/g, '')
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+    if (altText) {
+      cleanQ += ' ' + altText;
     }
 
-    // 3. Subject and Chapter context
-    let sub = _activeSub ? (CAT_LABELS[_activeSub] || SUB_LABELS[_activeSub] || _activeSub) : (curSubject ? (SUB_LABELS[curSubject] || curSubject) : 'NEET');
-    sub = sub.charAt(0).toUpperCase() + sub.slice(1);
-    
-    const chapter = q.subchapter || q.chapter || q.chapter_name || (curUnit ? curUnit.u : '');
+    // 2. Extract and format all 4 Options (A, B, C, D)
+    const opts = q.opts || q.options || [];
+    const LETTERS = ['(A)', '(B)', '(C)', '(D)'];
+    let cleanOpts = [];
+    if (Array.isArray(opts)) {
+      opts.forEach((opt, idx) => {
+        let optStr = String(opt || '')
+          .replace(/data:image\/[^;]+;base64,[a-zA-Z0-9+/=]+/g, ' ')
+          .replace(/!\[.*?\]\([^)]+\)/g, ' ')
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (optStr) {
+          const prefix = LETTERS[idx] || `(${idx + 1})`;
+          cleanOpts.push(`${prefix} ${optStr}`);
+        }
+      });
+    }
 
-    // 4. Formulate targeted Google / Gemini search query
-    const parts = ['NEET', sub];
-    if (chapter) parts.push(`"${chapter}"`);
-    if (altText) parts.push(`"${altText}"`);
-    if (cleanQ) parts.push(cleanQ.substring(0, 110));
-    if (ansText) parts.push(`"${ansText.substring(0, 45)}"`);
-
-    const fullQuery = parts.join(' ').replace(/\s+/g, ' ').trim();
+    // 3. Formulate direct, clean search query (Question Text + Options only)
+    const fullQuery = (cleanQ + ' ' + cleanOpts.join(' ')).replace(/\s+/g, ' ').trim();
     const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(fullQuery);
 
-    // 5. Direct navigation / popup
+    // 4. Open Google Search directly in a new tab
     const newWin = window.open(searchUrl, '_blank');
     if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
       window.location.href = searchUrl;
