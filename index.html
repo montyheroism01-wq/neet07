@@ -7042,6 +7042,70 @@ function formatQuestionText(s, isOption = false) {
   return safe;
 }
 
+/* ══════════ GEMINI / GOOGLE AI QUESTION SEARCH ══════════ */
+function searchCurrentQuestionOnGoogle() {
+  try {
+    if (!_gameQs || !_gameQs[_qIdx]) {
+      console.warn('No active question to search');
+      return;
+    }
+    const q = _gameQs[_qIdx];
+
+    // 1. Extract Question Text safely across all question formats
+    let rawQ = q.q || q.question || '';
+    if (typeof rawQ !== 'string') rawQ = String(rawQ || '');
+
+    // Extract Diagram descriptions if present
+    const altMatches = rawQ.match(/!\[(.*?)\]/g) || [];
+    const altText = altMatches.map(a => a.replace(/[!\[\]]/g, '').trim()).filter(a => a && !['image', 'diagram'].includes(a.toLowerCase())).join(' ');
+
+    // Clean Question text: remove base64 data, markdown brackets, and HTML tags
+    let cleanQ = rawQ
+      .replace(/data:image\/[^;]+;base64,[a-zA-Z0-9+/=]+/g, ' ')
+      .replace(/!\[.*?\]\([^)]+\)/g, ' ')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // 2. Extract Options & Answer
+    const opts = q.opts || q.options || [];
+    const ansIdx = (typeof q.ans === 'number') ? q.ans : ((typeof q.answer === 'number') ? q.answer : -1);
+    let ansText = '';
+    if (ansIdx >= 0 && opts[ansIdx]) {
+      ansText = String(opts[ansIdx])
+        .replace(/data:image\/[^;]+;base64,[a-zA-Z0-9+/=]+/g, '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    // 3. Subject and Chapter context
+    let sub = _activeSub ? (CAT_LABELS[_activeSub] || SUB_LABELS[_activeSub] || _activeSub) : (curSubject ? (SUB_LABELS[curSubject] || curSubject) : 'NEET');
+    sub = sub.charAt(0).toUpperCase() + sub.slice(1);
+    
+    const chapter = q.subchapter || q.chapter || q.chapter_name || (curUnit ? curUnit.u : '');
+
+    // 4. Formulate targeted Google / Gemini search query
+    const parts = ['NEET', sub];
+    if (chapter) parts.push(`"${chapter}"`);
+    if (altText) parts.push(`"${altText}"`);
+    if (cleanQ) parts.push(cleanQ.substring(0, 110));
+    if (ansText) parts.push(`"${ansText.substring(0, 45)}"`);
+
+    const fullQuery = parts.join(' ').replace(/\s+/g, ' ').trim();
+    const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(fullQuery);
+
+    // 5. Direct navigation / popup
+    const newWin = window.open(searchUrl, '_blank');
+    if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+      window.location.href = searchUrl;
+    }
+  } catch (err) {
+    console.error('Gemini Search error:', err);
+    window.open('https://www.google.com/search?q=NEET+MCQ+Solution', '_blank');
+  }
+}
+
 function openImgModal(src) {
   if (!src) return;
   const m = document.getElementById('imgZoomModal');
@@ -7164,11 +7228,20 @@ function skipQ(){
 function prevQ(){ updateTime(); if(_qIdx>0){ _qIdx--; loadQ(); } }
 function nextQ(){ updateTime(); if(_qIdx<_gameQs.length-1){ _qIdx++; loadQ(); } else endGame(); }
 
-function showExp(q,isC){
-  const ec=document.getElementById('expCard'),el=document.getElementById('expLabel'),et=document.getElementById('expText');
-  ec.className='exp-card show '+(isC?'exp-c':'exp-w');
-  el.textContent=isC?'✔ Correct!':'✘ Incorrect';
-  et.innerHTML=(isC?'':`<strong>Correct: ${q.opts[q.ans]}</strong><br>`)+((q.fact||'Standard NEET concept.'));
+function showExp(q, isC){
+  const ec = document.getElementById('expCard'), el = document.getElementById('expLabel'), et = document.getElementById('expText');
+  if (!ec || !el || !et) return;
+  ec.className = 'exp-card show ' + (isC ? 'exp-c' : 'exp-w');
+  el.textContent = isC ? '✔ Correct!' : '✘ Incorrect';
+  
+  const opts = q.opts || q.options || [];
+  const ansIdx = (typeof q.ans === 'number') ? q.ans : ((typeof q.answer === 'number') ? q.answer : 0);
+  const ansText = (opts && opts[ansIdx]) ? opts[ansIdx] : '';
+
+  let expContent = (isC ? '' : `<strong>Correct: ${ansText}</strong><br>`) + (q.fact || q.explanation || 'Standard NEET concept.');
+  expContent += `<div style="margin-top:12px;"><button class="gemini-search-btn" onclick="searchCurrentQuestionOnGoogle()" style="display:inline-flex; width:auto; padding:6px 12px; font-size:0.76rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" fill="url(#geminiGrad)"/><path d="M19 16L20.2 18.8L23 20L20.2 21.2L19 24L17.8 21.2L15 20L17.8 18.8L19 16Z" fill="url(#geminiGrad2)"/></svg><span>Google / Gemini Solution</span></button></div>`;
+  et.innerHTML = expContent;
+}</strong><br>`)+((q.fact||'Standard NEET concept.'));
 }
 
 function exitGame(){
