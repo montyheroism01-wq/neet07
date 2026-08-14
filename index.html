@@ -6494,17 +6494,26 @@ function dismissSplash() {
     splash.classList.add('fade-out');
     setTimeout(() => {
       splash.style.display = 'none';
-    }, 600);
+    }, 500);
   }
 }
 
-// Immediate timeout fallback & load listener
-setTimeout(dismissSplash, 1600);
+// Check for active test session immediately
+setTimeout(() => {
+  if (restoreActiveTestState()) return;
+  dismissSplash();
+}, 600);
+
 window.addEventListener('DOMContentLoaded', () => {
+  if (restoreActiveTestState()) return;
   setTimeout(dismissSplash, 1200);
   try { _fetchCloud(); } catch(e){}
 });
-window.addEventListener('load', dismissSplash);
+
+window.addEventListener('load', () => {
+  if (restoreActiveTestState()) return;
+  dismissSplash();
+});
 
 /* ══════════ AUDIO ══════════ */
 let _ac = null;
@@ -7055,7 +7064,7 @@ function formatQuestionText(s, isOption = false) {
   return safe;
 }
 
-/* ══════════ AUTOMATIC TEST SESSION PERSISTENCE (APK & WEB SAFE) ══════════ */
+/* ══════════ STRICT AUTOMATIC TEST SESSION PERSISTENCE ══════════ */
 function saveActiveTestState() {
   if (!_gameQs || !_gameQs.length || _qIdx < 0) return;
   try {
@@ -7073,9 +7082,12 @@ function saveActiveTestState() {
       qDurations: _qDurations,
       gameQs: _gameQs,
       title: document.getElementById('solverTitle')?.textContent || 'NEET Practice',
-      subTitle: document.getElementById('solverSub')?.textContent || 'Practice'
+      subTitle: document.getElementById('solverSub')?.textContent || 'Practice',
+      timestamp: Date.now(),
+      completed: false
     };
-    sessionStorage.setItem('_active_quiz_session', JSON.stringify(state));
+    localStorage.setItem('_active_neet_test_session', JSON.stringify(state));
+    sessionStorage.setItem('_active_neet_test_session', JSON.stringify(state));
   } catch (e) {
     console.warn('Could not save session state:', e);
   }
@@ -7083,19 +7095,26 @@ function saveActiveTestState() {
 
 function clearActiveTestState() {
   try {
-    sessionStorage.removeItem('_active_quiz_session');
+    localStorage.removeItem('_active_neet_test_session');
+    sessionStorage.removeItem('_active_neet_test_session');
   } catch (e) {}
 }
 
 function restoreActiveTestState() {
   try {
-    const raw = sessionStorage.getItem('_active_quiz_session');
+    const raw = localStorage.getItem('_active_neet_test_session') || sessionStorage.getItem('_active_neet_test_session');
     if (!raw) return false;
     const state = JSON.parse(raw);
-    if (!state || !state.gameQs || !state.gameQs.length) return false;
+    if (!state || !state.gameQs || !state.gameQs.length || state.completed) return false;
 
-    _activeSub = state.activeSub;
-    _activeSetIdx = state.activeSetIdx;
+    // Reject stale sessions older than 7 days
+    if (state.timestamp && (Date.now() - state.timestamp > 7 * 24 * 60 * 60 * 1000)) {
+      clearActiveTestState();
+      return false;
+    }
+
+    _activeSub = state.activeSub || 'botany';
+    _activeSetIdx = (state.activeSetIdx !== undefined) ? state.activeSetIdx : -1;
     _qIdx = state.qIdx || 0;
     _correct = state.correct || 0;
     _wrong = state.wrong || 0;
@@ -7107,11 +7126,17 @@ function restoreActiveTestState() {
     _qDurations = state.qDurations || [];
     _gameQs = state.gameQs;
 
-    buildPills();
-    if (document.getElementById('solverTitle')) document.getElementById('solverTitle').textContent = state.title;
-    if (document.getElementById('solverSub')) document.getElementById('solverSub').textContent = state.subTitle;
+    // Immediately hide splash
+    dismissSplash();
 
-    showScreen('gameScreen');
+    // Show gameScreen
+    showScreen('gameScreen', false);
+
+    // Build pills and titles
+    buildPills();
+    if (document.getElementById('solverTitle')) document.getElementById('solverTitle').textContent = state.title || 'NEET Practice';
+    if (document.getElementById('solverSub')) document.getElementById('solverSub').textContent = state.subTitle || 'Practice Set';
+
     loadQ();
     return true;
   } catch (e) {
@@ -7120,6 +7145,17 @@ function restoreActiveTestState() {
   }
 }
 
+// Background / Tab Switch / Close listeners to continuously preserve active test
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (!_gameQs || !_gameQs.length) restoreActiveTestState();
+  } else {
+    saveActiveTestState();
+  }
+});
+window.addEventListener('pagehide', saveActiveTestState);
+window.addEventListener('beforeunload', saveActiveTestState);
+
 /* ══════════ GEMINI / GOOGLE AI QUESTION SEARCH ══════════ */
 function searchCurrentQuestionOnGoogle() {
   try {
@@ -7127,16 +7163,16 @@ function searchCurrentQuestionOnGoogle() {
       console.warn('No active question to search');
       return;
     }
-    // Save test state so nothing is ever lost in Web APK / browser back button!
+    // 1. Strictly persist test state before navigating/opening
     saveActiveTestState();
 
     const q = _gameQs[_qIdx];
 
-    // 1. Extract Question Text
+    // 2. Extract Question Text
     let rawQ = q.q || q.question || '';
     if (typeof rawQ !== 'string') rawQ = String(rawQ || '');
 
-    // Extract Diagram description or alt text if present
+    // Extract Diagram description
     const altMatches = rawQ.match(/!\[(.*?)\]/g) || [];
     const altText = altMatches.map(a => a.replace(/[!\[\]]/g, '').trim()).filter(a => a && !['image', 'diagram'].includes(a.toLowerCase())).join(' ');
 
@@ -7152,7 +7188,7 @@ function searchCurrentQuestionOnGoogle() {
       cleanQ += ' ' + altText;
     }
 
-    // 2. Extract Options
+    // 3. Extract and format all 4 Options
     const opts = q.opts || q.options || [];
     const LETTERS = ['(A)', '(B)', '(C)', '(D)'];
     let cleanOpts = [];
@@ -7171,53 +7207,19 @@ function searchCurrentQuestionOnGoogle() {
       });
     }
 
-    // 3. Search Query
+    // 4. Clean Search Query
     const fullQuery = (cleanQ + ' ' + cleanOpts.join(' ')).replace(/\s+/g, ' ').trim();
     const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(fullQuery);
 
-    // 4. Open In-App Search Sheet (Prevents APK from resetting session!)
-    openInAppSearch(searchUrl);
+    // 5. Open Search
+    const newWin = window.open(searchUrl, '_blank');
+    if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+      window.location.href = searchUrl;
+    }
   } catch (err) {
     console.error('Gemini Search error:', err);
     window.open('https://www.google.com/search?q=NEET+MCQ+Solution', '_blank');
   }
-}
-
-function openInAppSearch(url) {
-  const modal = document.getElementById('inAppSearchModal');
-  const frame = document.getElementById('inAppSearchFrame');
-  const fallback = document.getElementById('inAppFallbackNotice');
-  const extBtn = document.getElementById('openExternalBrowserBtn');
-
-  if (extBtn) {
-    extBtn.onclick = () => {
-      // Save state before opening external browser
-      saveActiveTestState();
-      window.open(url, '_system') || window.open(url, '_blank');
-    };
-  }
-
-  if (modal) {
-    modal.style.display = 'flex';
-    // Try in-app frame
-    if (frame) {
-      frame.src = url;
-      // If Google blocks iframe embedding via X-Frame-Options, show sleek fallback overlay with 1-tap Chrome launch
-      frame.onerror = () => {
-        if (fallback) fallback.style.display = 'flex';
-      };
-    }
-  } else {
-    // If no modal, open in system browser without breaking session
-    window.open(url, '_blank');
-  }
-}
-
-function closeInAppSearch() {
-  const modal = document.getElementById('inAppSearchModal');
-  const frame = document.getElementById('inAppSearchFrame');
-  if (frame) frame.src = 'about:blank';
-  if (modal) modal.style.display = 'none';
 }
 
 function openImgModal(src) {
@@ -8010,29 +8012,7 @@ function renderFlashcards(qs, rs, containerId) {
 </div>
 
 
-<!-- ═══ IN-APP GOOGLE SEARCH MODAL (PREVENTS APK SESSION LOSS) ═══ -->
-<div id="inAppSearchModal" style="display:none; position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); flex-direction:column;">
-  <div style="background:var(--bg-surface); border-bottom:1.5px solid var(--border); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
-    <button onclick="closeInAppSearch()" style="display:flex; align-items:center; gap:6px; background:var(--bg-surface-light); border:1px solid var(--border); color:var(--text-main); font-weight:800; font-size:0.85rem; padding:8px 14px; border-radius:10px; cursor:pointer; font-family:inherit;">
-      ‹ Return to Test
-    </button>
-    <div style="font-size:0.88rem; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:6px;">
-      <span>✨</span> Google / Gemini Search
-    </div>
-    <button id="openExternalBrowserBtn" style="background:var(--primary); border:none; color:#fff; font-weight:800; font-size:0.78rem; padding:8px 12px; border-radius:10px; cursor:pointer; font-family:inherit;">
-      Open in Chrome ↗
-    </button>
-  </div>
-  <div style="flex:1; width:100%; position:relative; background:#fff;">
-    <iframe id="inAppSearchFrame" src="" style="width:100%; height:100%; border:none; display:block;" allow="camera; clipboard-read; clipboard-write"></iframe>
-    <div id="inAppFallbackNotice" style="display:none; position:absolute; inset:0; background:var(--bg-surface); flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; gap:16px;">
-      <div style="font-size:2.5rem;">🔍</div>
-      <div style="font-weight:900; font-size:1.1rem; color:var(--text-main);">Search Opened in Browser</div>
-      <div style="font-size:0.84rem; color:var(--text-muted); max-width:320px; line-height:1.5;">Your test progress is saved! When you're done reading the solution, switch back here to continue your test.</div>
-      <button onclick="closeInAppSearch()" style="background:var(--primary); color:#fff; border:none; font-weight:800; padding:12px 24px; border-radius:12px; font-size:0.92rem; cursor:pointer; font-family:inherit;">Continue Test →</button>
-    </div>
-  </div>
-</div>
+
 
 </body>
 </html>
