@@ -6900,16 +6900,12 @@ const DIFF_SEC={ easy:20, medium:12, hard:7 };
 
 /* ══════════ TIME & PILL CONTROLLER ══════════ */
 function updateTime(){
-  if(_qStart > 0){
+  if(_qStart > 0 && !_answered){
     const spent = Math.floor((Date.now() - _qStart) / 1000);
     if (spent > 0) {
       if (!_qDurations) _qDurations = new Array(_totalQ).fill(0);
       _qDurations[_qIdx] = (_qDurations[_qIdx] || 0) + spent;
       _qStart = Date.now();
-      const resp = (_userResponses || []).find(r => r.qi === _qIdx);
-      if (resp) {
-        resp.dur = _qDurations[_qIdx];
-      }
     }
   }
   saveActiveTestState();
@@ -6948,7 +6944,7 @@ function buildPills(){
     p.textContent = i + 1; 
     p.dataset.qi = i;
 
-    // Restore colors (Green for correct, Red for wrong, Yellow/Gray for skip)
+    // Restore colors (Green for correct, Red for wrong, Gray for skip)
     const resp = (_userResponses || []).find(r => r.qi === i);
     if (resp) {
       if (resp.skipped) p.classList.add('p-skip');
@@ -7273,7 +7269,7 @@ function closeImgModal() {
   if (m) m.style.display = 'none';
 }
 
-/* ══════════ LOAD QUESTION & PRECISE TIMING ══════════ */
+/* ══════════ LOAD QUESTION & ACCUMULATED/FROZEN TIMING ══════════ */
 function loadQ(){
   updateTime();
   clearInterval(_tmr);
@@ -7317,19 +7313,8 @@ function loadQ(){
     grid.appendChild(c);
   });
 
-  // Check Prior Answer
-  const prev = (_userResponses || []).find(r => r.qi === _qIdx);
-  if(prev){ 
-    _answered = true; 
-    showPriorAnswer(prev, q); 
-    if (gBtn) gBtn.style.display = 'inline-flex'; 
-    document.getElementById('btnSkip').style.display = 'none';
-  }
-
-  // Question Timer (Accumulated time spent on this specific question)
   if (!_qDurations) _qDurations = new Array(_totalQ).fill(0);
-  const baseDur = _qDurations[_qIdx] || 0;
-  _qStart = Date.now();
+  const prev = (_userResponses || []).find(r => r.qi === _qIdx);
 
   const timerEl = document.getElementById('solverTimer');
   const formatTimeStr = (sec) => {
@@ -7338,14 +7323,29 @@ function loadQ(){
     return `${m}:${s}`;
   };
 
-  if (timerEl) timerEl.textContent = formatTimeStr(baseDur);
+  if(prev){ 
+    // ALREADY ANSWERED: Timer stays FROZEN/STUCK at the solved duration permanently!
+    _answered = true; 
+    showPriorAnswer(prev, q); 
+    if (gBtn) gBtn.style.display = 'inline-flex'; 
+    document.getElementById('btnSkip').style.display = 'none';
+    
+    const finalDur = prev.dur !== undefined ? prev.dur : (_qDurations[_qIdx] || 0);
+    if (timerEl) timerEl.textContent = formatTimeStr(finalDur);
+    _qStart = 0; // Do not tick or accumulate any more time
+  } else {
+    // UNANSWERED: Live stopwatch continues counting up from accumulated seconds!
+    const baseDur = _qDurations[_qIdx] || 0;
+    _qStart = Date.now();
+    if (timerEl) timerEl.textContent = formatTimeStr(baseDur);
 
-  _tmr = setInterval(() => {
-    if (_qStart > 0) {
-      const currentSec = baseDur + Math.floor((Date.now() - _qStart) / 1000);
-      if (timerEl) timerEl.textContent = formatTimeStr(currentSec);
-    }
-  }, 1000);
+    _tmr = setInterval(() => {
+      if (_qStart > 0 && !_answered) {
+        const currentSec = (_qDurations[_qIdx] || 0) + Math.floor((Date.now() - _qStart) / 1000);
+        if (timerEl) timerEl.textContent = formatTimeStr(currentSec);
+      }
+    }, 1000);
+  }
 
   saveActiveTestState();
 }
@@ -7353,7 +7353,7 @@ function loadQ(){
 function showPriorAnswer(resp, q){
   document.querySelectorAll('.opt-card').forEach(c => {
     const oi = parseInt(c.dataset.oi, 10);
-    c.onclick = null; // Prevent modifying answered options
+    c.onclick = null; // Lock answered options
     if (oi === q.ans) {
       c.classList.add('correct');
     }
@@ -7369,16 +7369,31 @@ function showPriorAnswer(resp, q){
 function handleAnswer(card, isCorrect, q){
   if(_answered) return; 
   _answered = true; 
-  clearInterval(_tmr);
+  clearInterval(_tmr); // FREEZE/STOP TIMER PERMANENTLY FOR THIS QUESTION
   
   const oi = parseInt(card.dataset.oi, 10);
-  updateTime();
-  const dur = _qDurations[_qIdx] || 0;
   
+  // Calculate and freeze exact time taken to answer
+  if(_qStart > 0){
+    const spent = Math.floor((Date.now() - _qStart) / 1000);
+    if (!_qDurations) _qDurations = new Array(_totalQ).fill(0);
+    _qDurations[_qIdx] = (_qDurations[_qIdx] || 0) + spent;
+    _qStart = 0;
+  }
+  const finalSolveTime = _qDurations[_qIdx] || 0;
+  
+  // Display frozen time
+  const timerEl = document.getElementById('solverTimer');
+  if (timerEl) {
+    const m = String(Math.floor(finalSolveTime / 60)).padStart(2, '0');
+    const s = String(finalSolveTime % 60).padStart(2, '0');
+    timerEl.textContent = `${m}:${s}`;
+  }
+
   _userResponses = (_userResponses || []).filter(r => r.qi !== _qIdx);
-  _userResponses.push({ qi:_qIdx, picked:oi, ic:isCorrect, dur, skipped:false });
+  _userResponses.push({ qi:_qIdx, picked:oi, ic:isCorrect, dur:finalSolveTime, skipped:false });
   
-  // Disable option clicks after answering
+  // Lock options
   document.querySelectorAll('.opt-card').forEach(c => { c.onclick = null; });
 
   if(isCorrect){
@@ -7398,6 +7413,7 @@ function handleAnswer(card, isCorrect, q){
   const gBtn = document.getElementById('geminiSearchBtn');
   if (gBtn) gBtn.style.display = 'inline-flex';
   document.getElementById('btnSkip').style.display = 'none';
+
   saveActiveTestState();
 }
 
@@ -7406,11 +7422,17 @@ function skipQ(){
   _answered = true; 
   clearInterval(_tmr); 
   _skipped++;
-  updateTime();
-  const dur = _qDurations[_qIdx] || 0;
+  
+  if(_qStart > 0){
+    const spent = Math.floor((Date.now() - _qStart) / 1000);
+    if (!_qDurations) _qDurations = new Array(_totalQ).fill(0);
+    _qDurations[_qIdx] = (_qDurations[_qIdx] || 0) + spent;
+    _qStart = 0;
+  }
+  const finalSolveTime = _qDurations[_qIdx] || 0;
 
   _userResponses = (_userResponses || []).filter(r => r.qi !== _qIdx);
-  _userResponses.push({ qi:_qIdx, picked:-1, ic:false, dur, skipped:true });
+  _userResponses.push({ qi:_qIdx, picked:-1, ic:false, dur:finalSolveTime, skipped:true });
   
   SFX.tick(); 
   updatePill(_qIdx, 'p-skip');
