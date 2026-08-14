@@ -7674,6 +7674,33 @@ function filterReview(f,btn){
   buildReview(f);
 }
 
+function toggleReviewBookmark(qi, btn) {
+  if (!_gameQs || !_gameQs[qi]) return;
+  const q = _gameQs[qi];
+  let bms = getBM();
+  const i = bms.findIndex(b => b.q === q.q);
+  let isB = false;
+  if (i > -1) {
+    bms.splice(i, 1);
+    isB = false;
+    showToast('Question removed from Starred', 'info');
+  } else {
+    bms.push(q);
+    isB = true;
+    showToast('Question saved to Starred ⭐', 'success');
+  }
+  saveBM(bms);
+  if (btn) {
+    btn.classList.toggle('on', isB);
+    const icon = btn.querySelector('.bm-star-icon');
+    if (icon) {
+      icon.style.fill = isB ? '#fbbf24' : 'none';
+      icon.style.stroke = isB ? '#fbbf24' : 'currentColor';
+    }
+  }
+  updateBmBtn();
+}
+
 function buildReview(f){
   const list = document.getElementById('revList'); 
   if (!list) return;
@@ -7698,7 +7725,8 @@ function buildReview(f){
     
     const durSec = r.dur !== undefined ? r.dur : (_qDurations ? _qDurations[r.qi] || 0 : 0);
     const timeFormatted = durSec >= 60 ? `${Math.floor(durSec/60)}m ${durSec%60}s` : `${durSec}s`;
-    
+    const isStarred = getBM().some(b => b.q === q.q);
+
     const card = document.createElement('div'); 
     card.className = 'rev-card';
     let metaHtml = '';
@@ -7712,7 +7740,14 @@ function buildReview(f){
             <span class="rev-qnum">Q${r.qi+1}</span>
             <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); background:var(--bg-surface-light); border:1px solid var(--border); padding:2px 8px; border-radius:6px;">⏱️ ${timeFormatted}</span>
           </div>
-          <span class="rev-chip ${cc}">${ct}</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="rev-chip ${cc}">${ct}</span>
+            <button class="bm-btn ${isStarred ? 'on' : ''}" onclick="toggleReviewBookmark(${r.qi}, this)" aria-label="Star Question" style="width:30px; height:30px;">
+              <svg class="bm-star-icon" width="15" height="15" viewBox="0 0 24 24" fill="${isStarred ? '#fbbf24' : 'none'}" stroke="${isStarred ? '#fbbf24' : 'currentColor'}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
       <div class="rev-q-text">${formatQuestionText(q.q)}</div>
@@ -7976,8 +8011,14 @@ function selectNoteSubject(sub){
 
 function saveNewNote(){
   const text = (document.getElementById('noteTextInput').value||'').trim();
-  if(!text){ alert('Please write something first!'); return; }
-  if(!_selNoteSub){ alert('Please select a subject!'); return; }
+  if(!text){ 
+    showToast('Please write your note content first!', 'warn'); 
+    return; 
+  }
+  if(!_selNoteSub){ 
+    showToast('You did not select a subject! Please select Botany, Zoology, Physics, or Chemistry above.', 'warn'); 
+    return; 
+  }
   const sylKey = SYL_MAP[_selNoteSub];
   const units = [...(SYL[sylKey][11]||[]), ...(SYL[sylKey][12]||[])];
   const chapIdx = parseInt(document.getElementById('noteChapterPick').value)||0;
@@ -7987,11 +8028,12 @@ function saveNewNote(){
     sub: _selNoteSub,
     chap,
     text,
-    date: new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+    date: new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
   };
   const all = getNotes();
   all.unshift(note);
   saveNotes(all);
+  showToast('Note saved successfully! ✅', 'success');
   // Push to Google Sheets
   _push({type:'note', sub:_selNoteSub, chapter:chap, text, date:note.date});
   closeAddNoteModal();
