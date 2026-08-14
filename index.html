@@ -6696,6 +6696,20 @@ function dismissToast() {
   if (overlay) overlay.classList.remove('show');
 }
 
+// Guaranteed Immediate Splash Dismissal
+(function() {
+  function tryDismiss() {
+    const s = document.getElementById('splashScreen');
+    if (s) {
+      s.classList.add('fade-out');
+      setTimeout(() => { s.style.display = 'none'; }, 400);
+    }
+  }
+  setTimeout(tryDismiss, 800);
+  window.addEventListener('DOMContentLoaded', tryDismiss);
+  window.addEventListener('load', tryDismiss);
+})();
+
 function dismissSplash() {
   const splash = document.getElementById('splashScreen');
   if (splash) {
@@ -8222,20 +8236,29 @@ function selectNoteSubject(sub){
 
   // Populate Chapter Chips UI
   const sylKey = SYL_MAP[sub];
-  const units = [...(SYL[sylKey][11]||[]), ...(SYL[sylKey][12]||[])];
+  const units = [...(SYL[sylKey]?.[11]||[]), ...(SYL[sylKey]?.[12]||[])];
   const chipsWrap = document.getElementById('noteChapterChips');
   
-  if (units.length) {
+  if (units && units.length && chipsWrap) {
     _selNoteChap = units[0].u;
     chipsWrap.innerHTML = units.map((u, i) => `
-      <button type="button" class="chap-chip-btn ${i===0?'active':''}" onclick="selectNoteChapter('${u.u.replace(/'/g, "\'")}', this)">
+      <button type="button" class="chap-chip-btn ${i===0?'active':''}" data-idx="${i}">
         ${u.u}
       </button>
     `).join('');
+    
+    chipsWrap.querySelectorAll('.chap-chip-btn').forEach(b => {
+      b.onclick = function() {
+        const idx = parseInt(this.dataset.idx, 10);
+        selectNoteChapter(units[idx]?.u || 'General', this);
+      };
+    });
+
     document.getElementById('noteChapterPickWrap').style.display = 'block';
   } else {
     _selNoteChap = 'General';
-    document.getElementById('noteChapterPickWrap').style.display = 'none';
+    const wrap = document.getElementById('noteChapterPickWrap');
+    if (wrap) wrap.style.display = 'none';
   }
 }
 
