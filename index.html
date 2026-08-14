@@ -593,6 +593,280 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
   .opt-text img, .opt-card img { max-height: 140px; }
 }
 
+
+/* ══════════ PREMIER SUBJECT BADGES & ENERGETIC COUNTERS ══════════ */
+.subject-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.subject-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 0 15px rgba(59, 130, 246, 0.12);
+}
+.sc-icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+.subject-card:hover .sc-icon-wrap {
+  transform: scale(1.1) rotate(4deg);
+}
+
+.sc-qcount-badge {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.38);
+  color: #10b981;
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: scBadgePulse 3s ease-in-out infinite alternate;
+}
+[data-theme="dark"] .sc-qcount-badge {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #34d399;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+.sc-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #10b981;
+  display: inline-block;
+  animation: scDotBlink 1.8s ease-in-out infinite;
+}
+@keyframes scBadgePulse {
+  0% { box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15); }
+  100% { box-shadow: 0 0 14px rgba(16, 185, 129, 0.45); }
+}
+@keyframes scDotBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
+
+/* ══════════ GEMINI AI SEARCH & PRO MCQ ENHANCEMENTS ══════════ */
+.gemini-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.12), rgba(155, 114, 203, 0.12), rgba(217, 101, 112, 0.12));
+  border: 1px solid rgba(66, 133, 244, 0.35);
+  color: var(--text-main);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.1);
+  letter-spacing: 0.2px;
+}
+.gemini-search-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.22), rgba(155, 114, 203, 0.22), rgba(217, 101, 112, 0.22));
+  border-color: rgba(66, 133, 244, 0.6);
+  box-shadow: 0 4px 14px rgba(66, 133, 244, 0.25);
+}
+.gemini-search-btn:active {
+  transform: scale(0.95);
+}
+.gemini-search-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+.gemini-search-btn:hover svg {
+  transform: rotate(15deg) scale(1.15);
+}
+
+/* Statement and Assertion Badges */
+.q-stmt-badge {
+  display: inline-block;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  margin-right: 6px;
+}
+.q-sub-item {
+  margin: 6px 0 6px 14px;
+  line-height: 1.5;
+}
+
+/* App Footer Credit */
+.app-footer-credit {
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.65;
+  padding: 28px 0 20px 0;
+  user-select: none;
+}
+
+
+/* ══════════ ADVANCED IMAGE RENDERING & MOBILE OPTIMIZATION ══════════ */
+.q-img-wrap {
+  margin: 12px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-surface-light);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  border: 1px solid var(--border);
+  max-width: 100%;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.quiz-img {
+  max-width: 100%;
+  max-height: 280px;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  cursor: zoom-in;
+  transition: transform 0.2s ease;
+}
+.quiz-img:hover {
+  transform: scale(1.015);
+}
+
+.opt-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  min-height: 52px;
+  touch-action: manipulation;
+}
+.opt-text {
+  flex: 1;
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--text-main);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.opt-text .q-img-wrap {
+  margin: 4px 0;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.opt-text img {
+  max-width: 100%;
+  max-height: 140px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+/* Statement, Assertion, Reason Badges */
+.q-stmt-badge {
+  display: inline-block;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: rgba(37, 99, 246, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(37, 99, 246, 0.22);
+  margin-right: 6px;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+/* Mobile Specific Optimizations */
+@media (max-width: 600px) {
+  .solver-body {
+    padding: 12px 10px 80px 10px !important;
+  }
+  .q-text-card {
+    padding: 14px 12px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+    border-radius: 14px !important;
+  }
+  .quiz-img {
+    max-height: 230px !important;
+  }
+  .opt-card {
+    padding: 11px 12px !important;
+    min-height: 48px !important;
+  }
+  .opt-text {
+    font-size: 0.90rem !important;
+  }
+  .opt-letter {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.82rem !important;
+    flex-shrink: 0;
+  }
+  .q-stmt-badge {
+    font-size: 0.72rem !important;
+    padding: 2px 7px !important;
+  }
+  .gemini-search-btn {
+    font-size: 0.68rem !important;
+    padding: 3px 8px !important;
+  }
+  .solver-footer-inner {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+  .btn-solver {
+    height: 46px !important;
+    font-size: 0.88rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .q-text-card {
+    font-size: 0.88rem !important;
+  }
+  .subject-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .sc-qcount-badge {
+    font-size: 0.65rem !important;
+    padding: 2px 6px !important;
+  }
+}
+
 </style>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -625,7 +899,7 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
   <div class="start-inner">
     <div class="app-header">
       <div class="app-logo" onclick="openQuickAccess()" style="cursor:pointer;" title="Quick Access — Results Dashboard">
-        <div class="logo-icon">🧬</div>
+        <div class="logo-icon" style="overflow:hidden; display:flex; align-items:center; justify-content:center; padding:0;"><img src="logo.png" onerror="this.onerror=null; this.src=\'assets/logo.png\'; if(!this.complete||this.naturalWidth===0){this.parentElement.innerHTML=\'🧬\';}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" /></div>
         <div class="logo-text"><h1>NEET MCQ</h1><p>Botany · Zoology · Physics · Chemistry</p></div>
       </div>
       <div class="icon-btn" id="themeBtn" onclick="toggleTheme()">☀️</div>
@@ -633,7 +907,32 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
     <div>
       <div class="sec-label">Choose Subject</div>
       <div class="subject-grid">
-        <div class="subject-card" data-sub="botany" onclick="selectSubject('botany')"><div class="sc-icon-wrap">🌿</div><div class="sc-name">Botany</div><div class="sc-count">Click to explore</div></div>
+        <div class="subject-card" data-sub="botany" onclick="selectSubject('botany')">
+          <div class="sc-icon-wrap" style="background:linear-gradient(135deg,rgba(5,150,105,0.18),rgba(16,185,129,0.08));">🌿</div>
+          <div class="sc-name">Botany</div>
+          <div class="sc-count">Class 11 &amp; 12</div>
+          <div class="sc-qcount-badge"><span class="sc-pulse-dot"></span><span class="sc-qcount-num">3,820+ Qs</span></div>
+        </div>
+        <div class="subject-card" data-sub="zoology" onclick="selectSubject('zoology')">
+          <div class="sc-icon-wrap" style="background:linear-gradient(135deg,rgba(124,58,237,0.18),rgba(139,92,246,0.08));">🧬</div>
+          <div class="sc-name">Zoology</div>
+          <div class="sc-count">Class 11 &amp; 12</div>
+          <div class="sc-qcount-badge"><span class="sc-pulse-dot"></span><span class="sc-qcount-num">3,850+ Qs</span></div>
+        </div>
+        <div class="subject-card" data-sub="physics" onclick="selectSubject('physics')">
+          <div class="sc-icon-wrap" style="background:linear-gradient(135deg,rgba(217,119,6,0.18),rgba(245,158,11,0.08));">⚛️</div>
+          <div class="sc-name">Physics</div>
+          <div class="sc-count">Class 11 &amp; 12</div>
+          <div class="sc-qcount-badge"><span class="sc-pulse-dot"></span><span class="sc-qcount-num">2,260+ Qs</span></div>
+        </div>
+        <div class="subject-card" data-sub="chemistry" onclick="selectSubject('chemistry')">
+          <div class="sc-icon-wrap" style="background:linear-gradient(135deg,rgba(219,39,119,0.18),rgba(236,72,153,0.08));">🧪</div>
+          <div class="sc-name">Chemistry</div>
+          <div class="sc-count">Class 11 &amp; 12</div>
+          <div class="sc-qcount-badge"><span class="sc-pulse-dot"></span><span class="sc-qcount-num">3,480+ Qs</span></div>
+        </div>
+      </div>
+    </div>
         <div class="subject-card" data-sub="zoology" onclick="selectSubject('zoology')"><div class="sc-icon-wrap">🦁</div><div class="sc-name">Zoology</div><div class="sc-count">Click to explore</div></div>
         <div class="subject-card" data-sub="physics" onclick="selectSubject('physics')"><div class="sc-icon-wrap">⚛️</div><div class="sc-name">Physics</div><div class="sc-count">Click to explore</div></div>
         <div class="subject-card" data-sub="chemistry" onclick="selectSubject('chemistry')"><div class="sc-icon-wrap">🧪</div><div class="sc-name">Chemistry</div><div class="sc-count">Click to explore</div></div>
@@ -652,6 +951,10 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
   </div>
 </div>
 
+
+    <div class="app-footer-credit">
+      MADE BY ANABRATA
+    </div>
 <!-- ═══ CHAPTER SCREEN ═══ -->
 <div class="screen hidden" id="chapterScreen">
   <div class="page-header">
@@ -698,9 +1001,29 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
   <div class="solver-progress"><div class="solver-progress-fill" id="solverProgress" style="width:0%"></div></div>
   <div class="q-pills-row" id="qPillsRow"></div>
   <div class="solver-body" id="solverBody">
-    <div class="q-header">
+    <div class="q-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
       <div class="q-num-lbl" id="qNumLbl">Q 1 / 15</div>
-      <div class="q-cat-badge" id="qCatBadge">Botany</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="gemini-search-btn" id="geminiSearchBtn" onclick="searchCurrentQuestionOnGoogle()" style="display:none;" title="Search with Google / Gemini AI">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" fill="url(#geminiGrad)"/>
+            <path d="M19 16L20.2 18.8L23 20L20.2 21.2L19 24L17.8 21.2L15 20L17.8 18.8L19 16Z" fill="url(#geminiGrad2)"/>
+            <defs>
+              <linearGradient id="geminiGrad" x1="4" y1="2" x2="20" y2="18" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#4285F4"/>
+                <stop offset="0.5" stop-color="#9B72CB"/>
+                <stop offset="1" stop-color="#D96570"/>
+              </linearGradient>
+              <linearGradient id="geminiGrad2" x1="15" y1="16" x2="23" y2="24" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#34A853"/>
+                <stop offset="1" stop-color="#FBBC05"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span>Gemini Search</span>
+        </button>
+        <div class="q-cat-badge" id="qCatBadge">Botany</div>
+      </div>
     </div>
     <div class="q-text-card" id="qText">Loading...</div>
     <div class="options-grid" id="optionsGrid"></div>
@@ -1013,7 +1336,7 @@ const SYL = {
 const SYL_MAP = { botany:'Botany', zoology:'Zoology', physics:'Physics', chemistry:'Chemistry' };
 const FILE_MAP = { botany:'Botany.json', zoology:'Zoology.json', physics:'Physics.json', chemistry:'Chemistry.json' };
 const SUB_LABELS = { botany:'Botany', zoology:'Zoology', physics:'Physics', chemistry:'Chemistry' };
-const SUB_ICONS = { botany:'🌿', zoology:'🦁', physics:'⚛️', chemistry:'🧪' };
+const SUB_ICONS = { botany:'🌿', zoology:'🧬', physics:'⚛️', chemistry:'🧪' };
 const CAT_LABELS = { botany:'Botany', zoology:'Zoology', physics:'Physics', chemistry:'Chemistry' };
 
 const UPLOADED_SETS_INDEX = {
@@ -5329,8 +5652,21 @@ const UPLOADED_SETS_INDEX = {
 };
 
 const ALL_SCR = ['startScreen','chapterScreen','subchapterScreen','setsScreen','gameScreen','resultScreen','bookmarksScreen','bookmarkSetsScreen','revisionScreen','notesListScreen','mockTestListScreen','pyqListScreen','notesScreen','quickAccessModal','analyticsScreen'];
+// Global Safe Storage & Screen Router
 function showScreen(id, push=true) {
-  if (push) history.pushState({ sid: id }, '');
+  try {
+    if (push && window.history && window.history.pushState) {
+      window.history.pushState({ sid: id }, '');
+    }
+    ALL_SCR.forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.classList.toggle('hidden', s !== id);
+    });
+    window.scrollTo(0, 0);
+  } catch (err) {
+    console.warn('Router warning:', err);
+  }
+}, '');
   ALL_SCR.forEach(s => { const el = document.getElementById(s); if(el) el.classList.toggle('hidden', s !== id); });
 }
 
@@ -5926,14 +6262,50 @@ function updatePill(idx, cls){
 /* ══════════ QUESTION & MARKDOWN FORMATTER ══════════ */
 function formatQuestionText(s) {
   if (s === null || s === undefined) return '';
-  let safe = String(s)
+  let safe = String(s);
+
+  // Protect HTML image tags before escaping
+  const imgPlaceholders = [];
+  safe = safe.replace(/<img[^>]+>/gi, function(match) {
+    const idx = imgPlaceholders.length;
+    imgPlaceholders.push(match);
+    return `__IMG_PH_${idx}__`;
+  });
+
+  // Escape HTML special characters
+  safe = safe
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
+  // Restore preserved HTML <img> tags safely
+  imgPlaceholders.forEach((tag, idx) => {
+    const srcM = tag.match(/src=["']([^"']+)["']/i);
+    const altM = tag.match(/alt=["']([^"']*)["']/i);
+    const src = srcM ? srcM[1] : '';
+    const alt = altM ? altM[1] : 'Diagram';
+    safe = safe.replace(`__IMG_PH_${idx}__`, `<div class="q-img-wrap"><img src="${src}" alt="${alt}" class="quiz-img" loading="lazy" onclick="openImgModal(this.src)" /></div>`);
+  });
+
+  // Convert Markdown images: ![alt](url) -> <div class="q-img-wrap"><img ... /></div>
+  safe = safe.replace(/!\[(.*?)\]\((.*?)\)/g, function(_, alt, src) {
+    return `<div class="q-img-wrap"><img src="${src}" alt="${alt || 'Diagram'}" class="quiz-img" loading="lazy" onclick="openImgModal(this.src)" /></div>`;
+  });
+
+  // Format Bold text
+  safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Format Statements / Assertions / Reasons / Lists cleanly with high-vis badges
+  safe = safe.replace(/(Statement\s+[I|V|X|\d]+:?)/gi, '<br><span class="q-stmt-badge">$1</span>');
+  safe = safe.replace(/(Assertion\s*\(A\):?)/gi, '<br><span class="q-stmt-badge" style="background:rgba(219,39,119,0.12);color:var(--chem);border-color:rgba(219,39,119,0.25);">$1</span>');
+  safe = safe.replace(/(Reason\s*\(R\):?)/gi, '<br><span class="q-stmt-badge" style="background:rgba(124,58,237,0.12);color:var(--mix);border-color:rgba(124,58,237,0.25);">$1</span>');
+  safe = safe.replace(/(List\s*-[I|V|X|\d]+:?)/gi, '<br><span class="q-stmt-badge" style="background:rgba(5,150,105,0.12);color:var(--bio);border-color:rgba(5,150,105,0.25);">$1</span>');
+
+  // Sub-points indentation (e.g. (a) ... (b) ... (i) ... (ii))
+  safe = safe.replace(/(?:^|<br>)\s*(\([a-eA-E0-9ivx]+\)\s*[^<]+)/g, '<div class="q-sub-item">$1</div>');
+
   // ONLY parse tables if string actually contains pipe '|' characters!
   if (safe.includes('|')) {
-    // Pre-pass: Unpack embedded/merged column items inside existing pipe tables
     safe = safe.replace(
       /(\s+)([B-D][\s\.\:\d][^\n|()]*?)(\((?:i|ii|iii|iv|v|1|2|3|4|a|b|c|d)\)[^\n|]+)/g,
       ' |\n| $2 | $3'
@@ -5968,40 +6340,45 @@ function formatQuestionText(s) {
           if (/^\|[\s\-:|]+\|$/.test(trimmedRow)) return;
 
           const cells = trimmedRow.split('|').slice(1, -1).map(c => c.trim());
-          if (cells.length === 0 || cells.every(c => c === '')) return;
-
-          if (!hasHeader && (rowIdx === 0 || trimmedRow.toLowerCase().includes('column') || trimmedRow.toLowerCase().includes('list'))) {
-            hasHeader = true;
-            tableHtml += '<thead><tr>';
-            cells.forEach(cell => {
-              tableHtml += `<th>${cell}</th>`;
-            });
-            tableHtml += '</tr></thead><tbody>';
-          } else {
-            tableHtml += '<tr>';
-            cells.forEach((cell, ci) => {
-              const styleAttr = ci === 0 ? ' ' : '';
-              tableHtml += `<td${styleAttr}>${cell}</td>`;
-            });
-            tableHtml += '</tr>';
+          if (cells.length > 0) {
+            if (!hasHeader) {
+              tableHtml += '<thead><tr>';
+              cells.forEach(c => tableHtml += `<th>${c}</th>`);
+              tableHtml += '</tr></thead><tbody>';
+              hasHeader = true;
+            } else {
+              tableHtml += '<tr>';
+              cells.forEach(c => tableHtml += `<td>${c}</td>`);
+              tableHtml += '</tr>';
+            }
           }
         });
 
-        tableHtml += '</tbody></table></div>';
-        safe = before + tableHtml + after;
+        if (hasHeader) {
+          tableHtml += '</tbody></table></div>';
+          safe = before + tableHtml + after;
+        }
       }
     }
   }
 
-  // 1. Render images
-  safe = safe.replace(
-    /!\[(.*?)\]\((.*?)\)/g,
-    '<br><div class="img-wrap"><img src="$2" alt="$1" class="quiz-img"></div><br>'
-  );
-
-  // 2. Paragraph & line break formatting
+  // Line break formatting
   safe = safe.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
   return safe;
+}
+
+function openImgModal(src) {
+  if (!src) return;
+  const m = document.getElementById('imgZoomModal');
+  const img = document.getElementById('imgZoomTarget');
+  if (m && img) {
+    img.src = src;
+    m.style.display = 'flex';
+  }
+}
+function closeImgModal() {
+  const m = document.getElementById('imgZoomModal');
+  if (m) m.style.display = 'none';
 }
 
 function loadQ(){
@@ -6017,6 +6394,8 @@ function loadQ(){
   document.getElementById('btnNext').textContent=_qIdx===_totalQ-1?'Finish 🏁':'Next →';
   document.getElementById('btnSkip').style.display='';
   updateBmBtn();
+  const gBtn = document.getElementById('geminiSearchBtn');
+  if (gBtn) gBtn.style.display = 'none';
 
   // Build options
   const grid=document.getElementById('optionsGrid'); grid.innerHTML='';
@@ -6031,7 +6410,7 @@ function loadQ(){
 
   // Restore prior answer
   const prev=_userResponses.find(r=>r.qi===_qIdx);
-  if(prev){ _answered=true; showPriorAnswer(prev,q); }
+  if(prev){ _answered=true; showPriorAnswer(prev,q); if (gBtn) gBtn.style.display = 'inline-flex'; }
 
   // Stopwatch Timer
   const el = document.getElementById('solverTimer');
@@ -6092,6 +6471,8 @@ function handleAnswer(card, isCorrect, q){
     updatePill(_qIdx,'p-wrong');
   }
   showExp(q,isCorrect);
+  const gBtn = document.getElementById('geminiSearchBtn');
+  if (gBtn) gBtn.style.display = 'inline-flex';
   document.getElementById('btnSkip').style.display='none';
 }
 
@@ -6298,6 +6679,8 @@ function toggleBookmark(){
   if(i>-1){ bms.splice(i,1); _push({type:'bookmark',action:'remove',qText:q.q,subject:q.cat,correctAnswer:q.opts[q.ans]}); }
   else{ bms.push(q); _push({type:'bookmark',action:'add',qText:q.q,subject:q.cat,correctAnswer:q.opts[q.ans]}); }
   saveBM(bms); updateBmBtn();
+  const gBtn = document.getElementById('geminiSearchBtn');
+  if (gBtn) gBtn.style.display = 'none';
 }
 function updateBmBtn(){
   const btn=document.getElementById('bmBtn'); if(!btn||!_gameQs[_qIdx]) return;
@@ -6721,6 +7104,13 @@ function renderFlashcards(qs, rs, containerId) {
     </div>
     <div id="qaContent" style="padding:14px;display:flex;flex-direction:column;gap:10px;"></div>
   </div>
+</div>
+
+
+<!-- ═══ IMAGE ZOOM MODAL ═══ -->
+<div id="imgZoomModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.88); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;" onclick="closeImgModal()">
+  <button style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.22); border:none; color:#fff; width:42px; height:42px; border-radius:50%; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3);">✕</button>
+  <img id="imgZoomTarget" src="" style="max-width:96vw; max-height:86vh; object-fit:contain; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.6);" onclick="event.stopPropagation()" />
 </div>
 
 </body>
