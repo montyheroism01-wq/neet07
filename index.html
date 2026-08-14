@@ -638,7 +638,7 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  animation: scBadgePulse 3s ease-in-out infinite alternate;
+  
 }
 [data-theme="dark"] .sc-qcount-badge {
   background: rgba(16, 185, 129, 0.18);
@@ -653,7 +653,7 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
   border-radius: 50%;
   box-shadow: 0 0 8px #10b981;
   display: inline-block;
-  animation: scDotBlink 1.8s ease-in-out infinite;
+  
 }
 @keyframes scBadgePulse {
   0% { box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15); }
@@ -700,17 +700,7 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
 }
 
 /* Statement and Assertion Badges */
-.q-stmt-badge {
-  display: inline-block;
-  font-weight: 800;
-  font-size: 0.78rem;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(37, 99, 235, 0.1);
-  color: var(--primary);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  margin-right: 6px;
-}
+
 .q-sub-item {
   margin: 6px 0 6px 14px;
   line-height: 1.5;
@@ -795,19 +785,7 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
 }
 
 /* Statement, Assertion, Reason Badges */
-.q-stmt-badge {
-  display: inline-block;
-  font-weight: 800;
-  font-size: 0.78rem;
-  padding: 3px 9px;
-  border-radius: 6px;
-  background: rgba(37, 99, 246, 0.1);
-  color: var(--primary);
-  border: 1px solid rgba(37, 99, 246, 0.22);
-  margin-right: 6px;
-  margin-top: 4px;
-  margin-bottom: 2px;
-}
+
 
 /* Mobile Specific Optimizations */
 @media (max-width: 600px) {
@@ -836,10 +814,7 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
     font-size: 0.82rem !important;
     flex-shrink: 0;
   }
-  .q-stmt-badge {
-    font-size: 0.72rem !important;
-    padding: 2px 7px !important;
-  }
+  
   .gemini-search-btn {
     font-size: 0.68rem !important;
     padding: 3px 8px !important;
@@ -899,11 +874,14 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
   <div class="start-inner">
     <div class="app-header">
       <div class="app-logo" onclick="openQuickAccess()" style="cursor:pointer;" title="Quick Access — Results Dashboard">
-        <div class="logo-icon" style="overflow:hidden; display:flex; align-items:center; justify-content:center; padding:0;"><img src="logo.png" onerror="this.onerror=null; this.src=\'assets/logo.png\'; if(!this.complete||this.naturalWidth===0){this.parentElement.innerHTML=\'🧬\';}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" /></div>
+        <div class="logo-icon" style="overflow:hidden; display:flex; align-items:center; justify-content:center; padding:0;">
+          <img src="logo.png" onerror="this.onerror=null; this.src='assets/logo.png'; if(!this.complete||this.naturalWidth===0){this.parentElement.innerHTML='🧬';}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />
+        </div>
         <div class="logo-text"><h1>NEET MCQ</h1><p>Botany · Zoology · Physics · Chemistry</p></div>
       </div>
       <div class="icon-btn" id="themeBtn" onclick="toggleTheme()">☀️</div>
     </div>
+
     <div>
       <div class="sec-label">Choose Subject</div>
       <div class="subject-grid">
@@ -911,33 +889,29 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
           <div class="sc-icon-wrap" style="background:linear-gradient(135deg,rgba(5,150,105,0.18),rgba(16,185,129,0.08));">🌿</div>
           <div class="sc-name">Botany</div>
           <div class="sc-count">Class 11 &amp; 12</div>
-          <div class="sc-qcount-badge"><span class="sc-pulse-dot"></span><span class="sc-qcount-num">3,820+ Qs</span></div>
+          <div class="sc-qcount-badge"><span class="sc-qcount-num">3,820+ Qs</span></div>
         </div>
         <div class="subject-card" data-sub="zoology" onclick="selectSubject('zoology')">
           <div class="sc-icon-wrap" style="background:linear-gradient(135deg,rgba(124,58,237,0.18),rgba(139,92,246,0.08));">🧬</div>
           <div class="sc-name">Zoology</div>
           <div class="sc-count">Class 11 &amp; 12</div>
-          <div class="sc-qcount-badge"><span class="sc-pulse-dot"></span><span class="sc-qcount-num">3,850+ Qs</span></div>
+          <div class="sc-qcount-badge"><span class="sc-qcount-num">3,850+ Qs</span></div>
         </div>
         <div class="subject-card" data-sub="physics" onclick="selectSubject('physics')">
           <div class="sc-icon-wrap" style="background:linear-gradient(135deg,rgba(217,119,6,0.18),rgba(245,158,11,0.08));">⚛️</div>
           <div class="sc-name">Physics</div>
           <div class="sc-count">Class 11 &amp; 12</div>
-          <div class="sc-qcount-badge"><span class="sc-pulse-dot"></span><span class="sc-qcount-num">2,260+ Qs</span></div>
+          <div class="sc-qcount-badge"><span class="sc-qcount-num">2,260+ Qs</span></div>
         </div>
         <div class="subject-card" data-sub="chemistry" onclick="selectSubject('chemistry')">
           <div class="sc-icon-wrap" style="background:linear-gradient(135deg,rgba(219,39,119,0.18),rgba(236,72,153,0.08));">🧪</div>
           <div class="sc-name">Chemistry</div>
           <div class="sc-count">Class 11 &amp; 12</div>
-          <div class="sc-qcount-badge"><span class="sc-pulse-dot"></span><span class="sc-qcount-num">3,480+ Qs</span></div>
+          <div class="sc-qcount-badge"><span class="sc-qcount-num">3,480+ Qs</span></div>
         </div>
       </div>
     </div>
-        <div class="subject-card" data-sub="zoology" onclick="selectSubject('zoology')"><div class="sc-icon-wrap">🦁</div><div class="sc-name">Zoology</div><div class="sc-count">Click to explore</div></div>
-        <div class="subject-card" data-sub="physics" onclick="selectSubject('physics')"><div class="sc-icon-wrap">⚛️</div><div class="sc-name">Physics</div><div class="sc-count">Click to explore</div></div>
-        <div class="subject-card" data-sub="chemistry" onclick="selectSubject('chemistry')"><div class="sc-icon-wrap">🧪</div><div class="sc-name">Chemistry</div><div class="sc-count">Click to explore</div></div>
-      </div>
-    </div>
+
     <div>
       <div class="sec-label">Quick Access</div>
       <div class="feat-strip">
@@ -948,13 +922,14 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
         <div class="feat-chip" onclick="showNotesScreen()"><div class="feat-chip-icon">📝</div><div class="feat-chip-label">Notes</div></div>
       </div>
     </div>
-  </div>
-</div>
-
 
     <div class="app-footer-credit">
       MADE BY ANABRATA
     </div>
+  </div>
+</div>
+
+
 <!-- ═══ CHAPTER SCREEN ═══ -->
 <div class="screen hidden" id="chapterScreen">
   <div class="page-header">
@@ -6261,7 +6236,7 @@ function updatePill(idx, cls){
 /* ══════════ LOAD QUESTION ══════════ */
 
 /* ══════════ QUESTION & MARKDOWN FORMATTER ══════════ */
-function formatQuestionText(s) {
+function formatQuestionText(s, isOption = false) {
   if (s === null || s === undefined) return '';
   let safe = String(s);
 
@@ -6296,14 +6271,14 @@ function formatQuestionText(s) {
   // Format Bold text
   safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-  // Format Statements / Assertions / Reasons / Lists cleanly with high-vis badges
-  safe = safe.replace(/(Statement\s+[I|V|X|\d]+:?)/gi, '<br><span class="q-stmt-badge">$1</span>');
-  safe = safe.replace(/(Assertion\s*\(A\):?)/gi, '<br><span class="q-stmt-badge" style="background:rgba(219,39,119,0.12);color:var(--chem);border-color:rgba(219,39,119,0.25);">$1</span>');
-  safe = safe.replace(/(Reason\s*\(R\):?)/gi, '<br><span class="q-stmt-badge" style="background:rgba(124,58,237,0.12);color:var(--mix);border-color:rgba(124,58,237,0.25);">$1</span>');
-  safe = safe.replace(/(List\s*-[I|V|X|\d]+:?)/gi, '<br><span class="q-stmt-badge" style="background:rgba(5,150,105,0.12);color:var(--bio);border-color:rgba(5,150,105,0.25);">$1</span>');
-
-  // Sub-points indentation (e.g. (a) ... (b) ... (i) ... (ii))
-  safe = safe.replace(/(?:^|<br>)\s*(\([a-eA-E0-9ivx]+\)\s*[^<]+)/g, '<div class="q-sub-item">$1</div>');
+  // ONLY format Statements / Assertions / Reasons in QUESTION TEXT (not in options)
+  if (!isOption) {
+    // Normal simple bold words (NO colored badges)
+    safe = safe.replace(/(Statement\s+(?:VIII|VII|VI|III|IV|IX|II|V|I|X|\d+):?)/gi, '<br><br><strong>$1</strong>');
+    safe = safe.replace(/(Assertion\s*(?:\(A\))?:?)/gi, '<br><br><strong>$1</strong>');
+    safe = safe.replace(/(Reason\s*(?:\(R\))?:?)/gi, '<br><br><strong>$1</strong>');
+    safe = safe.replace(/(List\s*-(?:VIII|VII|VI|III|IV|IX|II|V|I|X|\d+):?)/gi, '<br><br><strong>$1</strong>');
+  }
 
   // ONLY parse tables if string actually contains pipe '|' characters!
   if (safe.includes('|')) {
@@ -6365,6 +6340,8 @@ function formatQuestionText(s) {
 
   // Line break formatting
   safe = safe.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  safe = safe.replace(/(?:<br>\s*){3,}/g, '<br><br>');
+  safe = safe.replace(/^(?:<br>\s*)+/, '');
   return safe;
 }
 
@@ -6388,7 +6365,7 @@ function loadQ(){
   updatePill(-1, '');
   document.getElementById('qNumLbl').textContent=`Q ${_qIdx+1} / ${_totalQ}`;
   document.getElementById('qCatBadge').textContent=CAT_LABELS[q.cat]||q.cat;
-  document.getElementById('qText').innerHTML=formatQuestionText(q.q);
+  document.getElementById('qText').innerHTML=formatQuestionText(q.q, false);
   document.getElementById('solverProgress').style.width=`${(_qIdx/_totalQ)*100}%`;
   const ec=document.getElementById('expCard'); ec.className='exp-card';
   document.getElementById('btnPrev').disabled=_qIdx===0;
@@ -6404,7 +6381,7 @@ function loadQ(){
   const idxs=[0,1,2,3];
   idxs.forEach((oi,di)=>{
     const c=document.createElement('div'); c.className='opt-card'; c.dataset.oi=oi; c.dataset.ic=(oi===q.ans);
-    c.innerHTML=`<div class="opt-letter">${LETTERS[di]}</div><div class="opt-text">${formatQuestionText(q.opts[oi])}</div>`;
+    c.innerHTML=`<div class="opt-letter">${LETTERS[di]}</div><div class="opt-text">${formatQuestionText(q.opts[oi], true)}</div>`;
     c.onclick=()=>handleAnswer(c,oi===q.ans,q);
     grid.appendChild(c);
   });
