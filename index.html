@@ -859,6 +859,19 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
 </head>
 <body data-theme="light">
 
+<!-- PREMIUM NOTIFICATION POPUP -->
+<div id="appToastOverlay" class="warn">
+  <div class="toast-top-row">
+    <div class="toast-icon-badge" id="toastIconBadge">⚠️</div>
+    <div class="toast-body-content">
+      <div class="toast-main-title" id="toastMainTitle">Subject Selection Required</div>
+      <div class="toast-main-msg" id="toastMainMsg">Please choose Botany, Zoology, Physics, or Chemistry to categorize your note.</div>
+    </div>
+    <button class="toast-close-btn" onclick="dismissToast()">✕</button>
+  </div>
+  <div class="toast-quick-chips" id="toastQuickChips" style="display:none;"></div>
+</div>
+
 <!-- SPLASH -->
 <div id="splashScreen">
   <div class="splash-icon">
@@ -6492,6 +6505,80 @@ function toggleTheme() {
 
 
 /* ══════════ SPLASH CONTROLLER ══════════ */
+/* ══════════ LUXURY NOTIFICATION CONTROLLER ══════════ */
+let _toastTimer = null;
+
+function showToast(msg, type = 'info', title = null) {
+  const overlay = document.getElementById('appToastOverlay');
+  const titleEl = document.getElementById('toastMainTitle');
+  const msgEl = document.getElementById('toastMainMsg');
+  const iconEl = document.getElementById('toastIconBadge');
+  const chipsEl = document.getElementById('toastQuickChips');
+  if (!overlay || !msgEl) return;
+
+  overlay.className = `warn show`;
+  if (type === 'warn') {
+    overlay.className = 'warn show';
+    if (iconEl) iconEl.textContent = '⚠️';
+    if (titleEl) titleEl.textContent = title || 'Action Required';
+  } else if (type === 'success') {
+    overlay.className = 'success show';
+    if (iconEl) iconEl.textContent = '✨';
+    if (titleEl) titleEl.textContent = title || 'Success';
+  } else if (type === 'err') {
+    overlay.className = 'err show';
+    if (iconEl) iconEl.textContent = '❌';
+    if (titleEl) titleEl.textContent = title || 'Error';
+  } else {
+    overlay.className = 'show';
+    if (iconEl) iconEl.textContent = 'ℹ️';
+    if (titleEl) titleEl.textContent = title || 'Notification';
+  }
+
+  msgEl.textContent = msg;
+  if (chipsEl) chipsEl.style.display = 'none';
+
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(dismissToast, 4000);
+}
+
+function showSubjectRequiredAlert() {
+  const overlay = document.getElementById('appToastOverlay');
+  const titleEl = document.getElementById('toastMainTitle');
+  const msgEl = document.getElementById('toastMainMsg');
+  const iconEl = document.getElementById('toastIconBadge');
+  const chipsEl = document.getElementById('toastQuickChips');
+  if (!overlay) return;
+
+  overlay.className = 'warn show';
+  if (iconEl) iconEl.textContent = '📚';
+  if (titleEl) titleEl.textContent = 'Please Select a Subject';
+  if (msgEl) msgEl.textContent = "You haven't selected a subject for your note yet. Choose one below to organize your notes:";
+
+  if (chipsEl) {
+    chipsEl.style.display = 'flex';
+    chipsEl.innerHTML = `
+      <button class="toast-chip-btn" onclick="quickSelectNoteSub('botany')">🌿 Botany</button>
+      <button class="toast-chip-btn" onclick="quickSelectNoteSub('zoology')">🧬 Zoology</button>
+      <button class="toast-chip-btn" onclick="quickSelectNoteSub('physics')">⚛️ Physics</button>
+      <button class="toast-chip-btn" onclick="quickSelectNoteSub('chemistry')">🧪 Chem</button>
+    `;
+  }
+
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(dismissToast, 7000);
+}
+
+function quickSelectNoteSub(sub) {
+  selectNoteSubject(sub);
+  dismissToast();
+}
+
+function dismissToast() {
+  const overlay = document.getElementById('appToastOverlay');
+  if (overlay) overlay.classList.remove('show');
+}
+
 function dismissSplash() {
   const splash = document.getElementById('splashScreen');
   if (splash) {
@@ -8012,11 +8099,11 @@ function selectNoteSubject(sub){
 function saveNewNote(){
   const text = (document.getElementById('noteTextInput').value||'').trim();
   if(!text){ 
-    showToast('Please write your note content first!', 'warn'); 
+    showToast('Please write your note content first before saving!', 'warn', 'Note Empty'); 
     return; 
   }
   if(!_selNoteSub){ 
-    showToast('You did not select a subject! Please select Botany, Zoology, Physics, or Chemistry above.', 'warn'); 
+    showSubjectRequiredAlert(); 
     return; 
   }
   const sylKey = SYL_MAP[_selNoteSub];
@@ -8033,7 +8120,7 @@ function saveNewNote(){
   const all = getNotes();
   all.unshift(note);
   saveNotes(all);
-  showToast('Note saved successfully! ✅', 'success');
+  showToast('Note saved successfully to ' + _selNoteSub.toUpperCase() + '!', 'success', 'Note Saved');
   // Push to Google Sheets
   _push({type:'note', sub:_selNoteSub, chapter:chap, text, date:note.date});
   closeAddNoteModal();
