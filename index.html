@@ -997,13 +997,18 @@ html,body{width:100%;height:100%;background:var(--bg-app);color:var(--text-main)
 <body data-theme="light">
 
 <!-- PREMIUM NOTIFICATION POPUP -->
-<div id="appToastOverlay" class="warn">
+<!-- PREMIUM NOTIFICATION POPUP -->
+<div id="appToastOverlay" class="warn" style="display:none !important; opacity:0 !important; visibility:hidden !important; pointer-events:none !important;">
   <div class="toast-top-row">
     <div class="toast-icon-badge" id="toastIconBadge">⚠️</div>
     <div class="toast-body-content">
       <div class="toast-main-title" id="toastMainTitle">Subject Selection Required</div>
       <div class="toast-main-msg" id="toastMainMsg">Please choose Botany, Zoology, Physics, or Chemistry to categorize your note.</div>
     </div>
+    <button type="button" class="toast-close-btn" onclick="dismissToast()" aria-label="Close">✕</button>
+  </div>
+  <div class="toast-quick-chips" id="toastQuickChips" style="display:none;"></div>
+</div>
     <button class="toast-close-btn" onclick="dismissToast()">✕</button>
   </div>
   <div class="toast-quick-chips" id="toastQuickChips" style="display:none;"></div>
@@ -6698,7 +6703,7 @@ function showToast(msg, type = 'info', title = null) {
   const chipsEl = document.getElementById('toastQuickChips');
   if (!overlay || !msgEl) return;
 
-  overlay.className = `warn show`;
+  overlay.className = `show`;
   if (type === 'warn') {
     overlay.className = 'warn show';
     if (iconEl) iconEl.textContent = '⚠️';
@@ -6720,6 +6725,11 @@ function showToast(msg, type = 'info', title = null) {
   msgEl.textContent = msg;
   if (chipsEl) chipsEl.style.display = 'none';
 
+  overlay.style.display = 'flex';
+  overlay.style.visibility = 'visible';
+  overlay.style.opacity = '1';
+  overlay.style.pointerEvents = 'auto';
+
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(dismissToast, 4000);
 }
@@ -6740,12 +6750,17 @@ function showSubjectRequiredAlert() {
   if (chipsEl) {
     chipsEl.style.display = 'flex';
     chipsEl.innerHTML = `
-      <button class="toast-chip-btn" onclick="quickSelectNoteSub('botany')">🌿 Botany</button>
-      <button class="toast-chip-btn" onclick="quickSelectNoteSub('zoology')">🧬 Zoology</button>
-      <button class="toast-chip-btn" onclick="quickSelectNoteSub('physics')">⚛️ Physics</button>
-      <button class="toast-chip-btn" onclick="quickSelectNoteSub('chemistry')">🧪 Chem</button>
+      <button type="button" class="toast-chip-btn" onclick="quickSelectNoteSub('botany')">🌿 Botany</button>
+      <button type="button" class="toast-chip-btn" onclick="quickSelectNoteSub('zoology')">🧬 Zoology</button>
+      <button type="button" class="toast-chip-btn" onclick="quickSelectNoteSub('physics')">⚛️ Physics</button>
+      <button type="button" class="toast-chip-btn" onclick="quickSelectNoteSub('chemistry')">🧪 Chem</button>
     `;
   }
+
+  overlay.style.display = 'flex';
+  overlay.style.visibility = 'visible';
+  overlay.style.opacity = '1';
+  overlay.style.pointerEvents = 'auto';
 
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(dismissToast, 7000);
@@ -6758,7 +6773,16 @@ function quickSelectNoteSub(sub) {
 
 function dismissToast() {
   const overlay = document.getElementById('appToastOverlay');
-  if (overlay) overlay.classList.remove('show');
+  if (!overlay) return;
+  overlay.classList.remove('show');
+  overlay.style.pointerEvents = 'none';
+  setTimeout(() => {
+    if (!overlay.classList.contains('show')) {
+      overlay.style.display = 'none';
+      overlay.style.visibility = 'hidden';
+      overlay.style.opacity = '0';
+    }
+  }, 350);
 }
 
 // Guaranteed Immediate Splash Dismissal
