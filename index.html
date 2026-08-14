@@ -6898,44 +6898,83 @@ _qStart=0; _sessionStart=0; _activeSetIdx=-1; _activeSub=''; _totalQ=0;
 const DIFF_SEC={ easy:20, medium:12, hard:7 };
 
 
+/* ══════════ TIME & PILL CONTROLLER ══════════ */
 function updateTime(){
-  if(!_answered && _qStart>0){
-    _qDurations[_qIdx] = (_qDurations[_qIdx]||0) + Math.floor((Date.now()-_qStart)/1000);
-    _qStart=0;
+  if(_qStart > 0){
+    const spent = Math.floor((Date.now() - _qStart) / 1000);
+    if (spent > 0) {
+      if (!_qDurations) _qDurations = new Array(_totalQ).fill(0);
+      _qDurations[_qIdx] = (_qDurations[_qIdx] || 0) + spent;
+      _qStart = Date.now();
+      const resp = (_userResponses || []).find(r => r.qi === _qIdx);
+      if (resp) {
+        resp.dur = _qDurations[_qIdx];
+      }
+    }
   }
+  saveActiveTestState();
 }
 
 function startSetGame(set, idx){
   _activeSetObject = set;
-
-  _activeSub=curSubject.toLowerCase(); _activeSetIdx=idx;
-  _userResponses=[]; _sessionStart=Date.now();
+  _activeSub = curSubject.toLowerCase(); 
+  _activeSetIdx = idx;
+  _userResponses = []; 
+  _sessionStart = Date.now();
   const unitName = curUnit ? curUnit.u : 'Mixed Practice';
   const subName = curUnit ? curUnit.s.join(', ') : '';
   const sName = set.set_name || `Set ${idx+1}`;
-  _gameQs=shuffle(set.questions.slice(0, 10).map(q=>({ cat:_activeSub, unit:unitName, subUnit:subName, set:sName, q:q.question, opts:q.options, ans:q.answer, fact:q.explanation||'' })));
-  _totalQ=_gameQs.length; 
-  _qIdx=0; _correct=0; _wrong=0; _skipped=0;
-  _qDurations=new Array(_totalQ).fill(0);
+  _gameQs = shuffle(set.questions.slice(0, 10).map(q => ({ cat:_activeSub, unit:unitName, subUnit:subName, set:sName, q:q.question, opts:q.options, ans:q.answer, fact:q.explanation||'' })));
+  _totalQ = _gameQs.length; 
+  _qIdx = 0; _correct = 0; _wrong = 0; _skipped = 0;
+  _qDurations = new Array(_totalQ).fill(0);
   buildPills();
-  document.getElementById('solverTitle').textContent=CAT_LABELS[_activeSub]||_activeSub;
-  document.getElementById('solverSub').textContent=set.set_name||`Set ${idx+1}`;
-  showScreen('gameScreen'); playSeq(SFX.go); loadQ();
+  document.getElementById('solverTitle').textContent = CAT_LABELS[_activeSub] || _activeSub;
+  document.getElementById('solverSub').textContent = set.set_name || `Set ${idx+1}`;
+  showScreen('gameScreen'); 
+  playSeq(SFX.go); 
+  loadQ();
 }
 
 /* ══════════ QUESTION PILLS ══════════ */
 function buildPills(){
-  const row=document.getElementById('qPillsRow'); row.innerHTML=''; row.scrollLeft=0;
-  for(let i=0;i<_totalQ;i++){
-    const p=document.createElement('div'); p.className='q-pill'+(i===0?' active':''); p.textContent=i+1; p.dataset.qi=i;
-    p.onclick=()=>{ updateTime(); _qIdx=i; loadQ(); };
+  const row = document.getElementById('qPillsRow'); 
+  if (!row) return;
+  row.innerHTML = ''; 
+  row.scrollLeft = 0;
+  for(let i = 0; i < _totalQ; i++){
+    const p = document.createElement('div'); 
+    p.className = 'q-pill' + (i === _qIdx ? ' active' : ''); 
+    p.textContent = i + 1; 
+    p.dataset.qi = i;
+
+    // Restore colors (Green for correct, Red for wrong, Yellow/Gray for skip)
+    const resp = (_userResponses || []).find(r => r.qi === i);
+    if (resp) {
+      if (resp.skipped) p.classList.add('p-skip');
+      else if (resp.ic) p.classList.add('p-correct');
+      else p.classList.add('p-wrong');
+    }
+
+    p.onclick = () => { 
+      updateTime(); 
+      _qIdx = i; 
+      loadQ(); 
+    };
     row.appendChild(p);
   }
 }
 
 function updatePill(idx, cls){
-  document.querySelectorAll('.q-pill').forEach(p=>{ p.classList.remove('active'); if(parseInt(p.dataset.qi)===idx&&cls) { p.classList.remove('p-correct','p-wrong','p-skip'); p.classList.add(cls); } });
-  const cur=document.querySelector(`.q-pill[data-qi="${_qIdx}"]`);
+  document.querySelectorAll('.q-pill').forEach(p => { 
+    p.classList.remove('active'); 
+    const qi = parseInt(p.dataset.qi, 10);
+    if (qi === idx && cls) { 
+      p.classList.remove('p-correct','p-wrong','p-skip'); 
+      p.classList.add(cls); 
+    } 
+  });
+  const cur = document.querySelector(`.q-pill[data-qi="${_qIdx}"]`);
   if(cur){ 
     cur.classList.add('active'); 
     const row = document.getElementById('qPillsRow');
@@ -6951,8 +6990,6 @@ function updatePill(idx, cls){
     }
   }
 }
-
-/* ══════════ LOAD QUESTION ══════════ */
 
 /* ══════════ QUESTION & MARKDOWN FORMATTER ══════════ */
 function formatQuestionText(s, isOption = false) {
@@ -7236,114 +7273,169 @@ function closeImgModal() {
   if (m) m.style.display = 'none';
 }
 
+/* ══════════ LOAD QUESTION & PRECISE TIMING ══════════ */
 function loadQ(){
-  saveActiveTestState();
-  clearInterval(_tmr); _answered=false;
-  const q=_gameQs[_qIdx];
+  updateTime();
+  clearInterval(_tmr);
+  _answered = false;
+  
+  if (!_gameQs || !_gameQs[_qIdx]) return;
+  const q = _gameQs[_qIdx];
+
+  buildPills();
   updatePill(-1, '');
-  document.getElementById('qNumLbl').textContent=`Q ${_qIdx+1} / ${_totalQ}`;
-  document.getElementById('qCatBadge').textContent=CAT_LABELS[q.cat]||q.cat;
-  document.getElementById('qText').innerHTML=formatQuestionText(q.q, false);
-  document.getElementById('solverProgress').style.width=`${(_qIdx/_totalQ)*100}%`;
-  const ec=document.getElementById('expCard'); ec.className='exp-card';
-  document.getElementById('btnPrev').disabled=_qIdx===0;
-  document.getElementById('btnNext').textContent=_qIdx===_totalQ-1?'Finish 🏁':'Next →';
-  document.getElementById('btnSkip').style.display='';
+
+  document.getElementById('qNumLbl').textContent = `Q ${_qIdx+1} / ${_totalQ}`;
+  document.getElementById('qCatBadge').textContent = CAT_LABELS[q.cat] || q.cat || 'MCQ';
+  document.getElementById('qText').innerHTML = formatQuestionText(q.q, false);
+  document.getElementById('solverProgress').style.width = `${((_qIdx + 1)/_totalQ)*100}%`;
+  
+  const ec = document.getElementById('expCard'); 
+  if (ec) ec.className = 'exp-card';
+  
+  document.getElementById('btnPrev').disabled = (_qIdx === 0);
+  document.getElementById('btnNext').textContent = (_qIdx === _totalQ - 1) ? 'Finish 🏁' : 'Next →';
+  document.getElementById('btnSkip').style.display = '';
   updateBmBtn();
+
   const gBtn = document.getElementById('geminiSearchBtn');
   if (gBtn) gBtn.style.display = 'none';
 
-  // Build options
-  const grid=document.getElementById('optionsGrid'); grid.innerHTML='';
-  const LETTERS=['A','B','C','D'];
-  const idxs=[0,1,2,3];
-  idxs.forEach((oi,di)=>{
-    const c=document.createElement('div'); c.className='opt-card'; c.dataset.oi=oi; c.dataset.ic=(oi===q.ans);
-    c.innerHTML=`<div class="opt-letter">${LETTERS[di]}</div><div class="opt-text">${formatQuestionText(q.opts[oi], true)}</div>`;
-    c.onclick=()=>handleAnswer(c,oi===q.ans,q);
+  // Build Options Grid
+  const grid = document.getElementById('optionsGrid'); 
+  grid.innerHTML = '';
+  const LETTERS = ['A','B','C','D'];
+  const opts = q.opts || q.options || [];
+
+  opts.forEach((optText, di) => {
+    const c = document.createElement('div'); 
+    c.className = 'opt-card'; 
+    c.dataset.oi = di; 
+    c.dataset.ic = (di === q.ans);
+    c.innerHTML = `<div class="opt-letter">${LETTERS[di] || di+1}</div><div class="opt-text">${formatQuestionText(optText, true)}</div>`;
+    c.onclick = () => handleAnswer(c, di === q.ans, q);
     grid.appendChild(c);
   });
 
-  // Restore prior answer
-  const prev=_userResponses.find(r=>r.qi===_qIdx);
-  if(prev){ _answered=true; showPriorAnswer(prev,q); if (gBtn) gBtn.style.display = 'inline-flex'; }
-
-  // Stopwatch Timer
-  const el = document.getElementById('solverTimer');
-  if(!prev){
-    _qStart = Date.now();
-    const startDur = _qDurations[_qIdx] || 0;
-    const m = String(Math.floor(startDur/60)).padStart(2,'0');
-    const s = String(startDur%60).padStart(2,'0');
-    el.textContent = m+':'+s;
-    
-    _tmr=setInterval(()=>{
-      const dur = startDur + Math.floor((Date.now()-_qStart)/1000);
-      const m = String(Math.floor(dur/60)).padStart(2,'0');
-      const s = String(dur%60).padStart(2,'0');
-      el.textContent = m+':'+s;
-    },1000);
-  } else {
-    const dur = prev.dur || 0;
-    const m = String(Math.floor(dur/60)).padStart(2,'0');
-    const s = String(dur%60).padStart(2,'0');
-    el.textContent = m+':'+s;
+  // Check Prior Answer
+  const prev = (_userResponses || []).find(r => r.qi === _qIdx);
+  if(prev){ 
+    _answered = true; 
+    showPriorAnswer(prev, q); 
+    if (gBtn) gBtn.style.display = 'inline-flex'; 
+    document.getElementById('btnSkip').style.display = 'none';
   }
+
+  // Question Timer (Accumulated time spent on this specific question)
+  if (!_qDurations) _qDurations = new Array(_totalQ).fill(0);
+  const baseDur = _qDurations[_qIdx] || 0;
+  _qStart = Date.now();
+
+  const timerEl = document.getElementById('solverTimer');
+  const formatTimeStr = (sec) => {
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  if (timerEl) timerEl.textContent = formatTimeStr(baseDur);
+
+  _tmr = setInterval(() => {
+    if (_qStart > 0) {
+      const currentSec = baseDur + Math.floor((Date.now() - _qStart) / 1000);
+      if (timerEl) timerEl.textContent = formatTimeStr(currentSec);
+    }
+  }, 1000);
+
+  saveActiveTestState();
 }
 
 function showPriorAnswer(resp, q){
-  document.querySelectorAll('.opt-card').forEach(c=>{
-    const oi=parseInt(c.dataset.oi);
-    if(oi===q.ans) c.classList.add('correct');
-    else if(oi===resp.picked&&!resp.ic) c.classList.add('wrong');
+  document.querySelectorAll('.opt-card').forEach(c => {
+    const oi = parseInt(c.dataset.oi, 10);
+    c.onclick = null; // Prevent modifying answered options
+    if (oi === q.ans) {
+      c.classList.add('correct');
+    }
+    if (oi === resp.picked && !resp.ic && !resp.skipped) {
+      c.classList.add('wrong');
+    }
   });
-  if(!resp.skipped) showExp(q,resp.ic);
-  document.getElementById('btnSkip').style.display='none';
-}
-
-function updateTimerUI(t, max){
-  const el=document.getElementById('solverTimer'); if(!el) return;
-  el.textContent=t; el.className='solver-timer';
-  if(max>=360){ el.classList.add('max-mode'); return; }
-  const r=t/max;
-  if(r<=.25) el.classList.add('danger');
-  else if(r<=.5) el.classList.add('warn');
+  if (!resp.skipped) {
+    showExp(q, resp.ic);
+  }
 }
 
 function handleAnswer(card, isCorrect, q){
-  if(_answered) return; _answered=true; clearInterval(_tmr);
-  const oi=parseInt(card.dataset.oi);
+  if(_answered) return; 
+  _answered = true; 
+  clearInterval(_tmr);
+  
+  const oi = parseInt(card.dataset.oi, 10);
   updateTime();
-  const dur=_qDurations[_qIdx];
-  _userResponses=_userResponses.filter(r=>r.qi!==_qIdx);
-  _userResponses.push({qi:_qIdx,picked:oi,ic:isCorrect,dur,skipped:false});
-  if(isCorrect){
-    SFX.ok(); card.classList.add('correct'); _correct++;
+  const dur = _qDurations[_qIdx] || 0;
+  
+  _userResponses = (_userResponses || []).filter(r => r.qi !== _qIdx);
+  _userResponses.push({ qi:_qIdx, picked:oi, ic:isCorrect, dur, skipped:false });
+  
+  // Disable option clicks after answering
+  document.querySelectorAll('.opt-card').forEach(c => { c.onclick = null; });
 
-    updatePill(_qIdx,'p-correct');
+  if(isCorrect){
+    SFX.ok(); 
+    card.classList.add('correct'); 
+    _correct++;
+    updatePill(_qIdx, 'p-correct');
   } else {
-    SFX.err(); card.classList.add('wrong'); _wrong++;
-    document.querySelectorAll('.opt-card').forEach(c=>{ if(c.dataset.ic==='true') c.classList.add('reveal'); });
-    updatePill(_qIdx,'p-wrong');
+    SFX.err(); 
+    card.classList.add('wrong'); 
+    _wrong++;
+    document.querySelectorAll('.opt-card').forEach(c => { if(c.dataset.ic === 'true') c.classList.add('reveal'); });
+    updatePill(_qIdx, 'p-wrong');
   }
-  showExp(q,isCorrect);
+  showExp(q, isCorrect);
+
   const gBtn = document.getElementById('geminiSearchBtn');
   if (gBtn) gBtn.style.display = 'inline-flex';
-  document.getElementById('btnSkip').style.display='none';
+  document.getElementById('btnSkip').style.display = 'none';
+  saveActiveTestState();
 }
-
 
 function skipQ(){
-  if(_answered) return; _answered=true; clearInterval(_tmr); _skipped++;
-  _userResponses=_userResponses.filter(r=>r.qi!==_qIdx);
-  _userResponses.push({qi:_qIdx,picked:-1,ic:false,dur:Math.round((Date.now()-_qStart)/1000),skipped:true});
-  SFX.tick(); updatePill(_qIdx,'p-skip');
-  document.getElementById('btnSkip').style.display='none';
-  setTimeout(()=>nextQ(),350);
+  if(_answered) return; 
+  _answered = true; 
+  clearInterval(_tmr); 
+  _skipped++;
+  updateTime();
+  const dur = _qDurations[_qIdx] || 0;
+
+  _userResponses = (_userResponses || []).filter(r => r.qi !== _qIdx);
+  _userResponses.push({ qi:_qIdx, picked:-1, ic:false, dur, skipped:true });
+  
+  SFX.tick(); 
+  updatePill(_qIdx, 'p-skip');
+  document.getElementById('btnSkip').style.display = 'none';
+  saveActiveTestState();
+  setTimeout(() => nextQ(), 350);
 }
 
-function prevQ(){ updateTime(); if(_qIdx>0){ _qIdx--; loadQ(); } }
-function nextQ(){ updateTime(); if(_qIdx<_gameQs.length-1){ _qIdx++; loadQ(); } else endGame(); }
+function prevQ(){ 
+  updateTime(); 
+  if(_qIdx > 0){ 
+    _qIdx--; 
+    loadQ(); 
+  } 
+}
+
+function nextQ(){ 
+  updateTime(); 
+  if(_qIdx < _gameQs.length - 1){ 
+    _qIdx++; 
+    loadQ(); 
+  } else {
+    endGame(); 
+  }
+}
 
 function showExp(q, isC){
   const ec = document.getElementById('expCard'), el = document.getElementById('expLabel'), et = document.getElementById('expText');
