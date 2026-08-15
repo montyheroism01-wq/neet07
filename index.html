@@ -7184,12 +7184,35 @@ function renderSets(data, unit=null, targetSubchapter=null){
 }
 
 function showAnalytics(idx){
-  const sub=curSubject.toLowerCase();
-  const rec=JSON.parse(localStorage.getItem(`_nc_${sub}_${idx}`)||'null'); if(!rec) return;
-  _userResponses=JSON.parse(localStorage.getItem(`_nr_${sub}_${idx}`)||'[]');
-  _gameQs=JSON.parse(localStorage.getItem(`_nq_${sub}_${idx}`)||'[]');
-  _activeSetIdx=idx; _activeSub=sub;
-  _correct=rec.correct||0; _wrong=rec.wrong||0; _skipped=rec.skipped||0; _totalQ=rec.total||0;
+  const sub = curSubject.toLowerCase();
+  const rec = getSetRecord(sub, idx, curSubjectData?.quiz_sets?.[idx]);
+  if(!rec) return;
+  _userResponses = JSON.parse(localStorage.getItem(`_nr_${sub}_${idx}`) || '[]');
+  _gameQs = JSON.parse(localStorage.getItem(`_nq_${sub}_${idx}`) || '[]');
+  _qDurations = JSON.parse(localStorage.getItem(`_nd_${sub}_${idx}`) || '[]');
+  _activeSetIdx = idx; 
+  _activeSub = sub;
+  _totalQ = rec.total || _gameQs.length || _userResponses.length || 0;
+  _correct = rec.correct || 0; 
+  _wrong = rec.wrong || 0; 
+  _skipped = rec.skipped !== undefined ? rec.skipped : (_totalQ - (_correct + _wrong));
+
+  // Ensure any missing question is backfilled into _userResponses as skipped
+  if (_gameQs && _gameQs.length) {
+    for (let i = 0; i < _gameQs.length; i++) {
+      if (!_userResponses.some(r => r.qi === i)) {
+        _userResponses.push({ 
+          qi: i, 
+          picked: -1, 
+          ic: false, 
+          dur: (_qDurations && _qDurations[i]) || 0, 
+          skipped: true 
+        });
+      }
+    }
+    _userResponses.sort((a, b) => a.qi - b.qi);
+  }
+
   _buildResult(rec);
   showScreen('resultScreen');
 }
@@ -7813,6 +7836,26 @@ function endGame(){
   clearInterval(_tmr); 
   playSeq(SFX.done, 110);
   
+  if (!_qDurations) _qDurations = new Array(_totalQ).fill(0);
+  if (!_userResponses) _userResponses = [];
+
+  // Guarantee every single question (0 to _totalQ - 1) has a response entry
+  for (let i = 0; i < _totalQ; i++) {
+    const existing = _userResponses.find(r => r.qi === i);
+    if (!existing) {
+      _userResponses.push({
+        qi: i,
+        picked: -1,
+        ic: false,
+        dur: _qDurations[i] || 0,
+        skipped: true
+      });
+    }
+  }
+  // Sort responses sequentially by question index
+  _userResponses.sort((a, b) => a.qi - b.qi);
+
+  _skipped = _totalQ - (_correct + _wrong);
   const timeTaken = Math.round((Date.now() - _sessionStart) / 1000);
   const acc = Math.round((_correct / _totalQ) * 100);
   const neet = (_correct * 4) - (_wrong * 1);
@@ -7836,6 +7879,7 @@ function endGame(){
     localStorage.setItem(`_nc_${_activeSub}_${_activeSetIdx}`, JSON.stringify(rec));
     localStorage.setItem(`_nr_${_activeSub}_${_activeSetIdx}`, JSON.stringify(_userResponses));
     localStorage.setItem(`_nq_${_activeSub}_${_activeSetIdx}`, JSON.stringify(_gameQs));
+    localStorage.setItem(`_nd_${_activeSub}_${_activeSetIdx}`, JSON.stringify(_qDurations));
   }
 
   // 2. Save by Set Name & URL (Protects all uploaded sets & filtered lists)
@@ -7844,11 +7888,13 @@ function endGame(){
       localStorage.setItem(`_nc_set_${_activeSub}_${_activeSetObject.set_name}`, JSON.stringify(rec));
       localStorage.setItem(`_nr_set_${_activeSub}_${_activeSetObject.set_name}`, JSON.stringify(_userResponses));
       localStorage.setItem(`_nq_set_${_activeSub}_${_activeSetObject.set_name}`, JSON.stringify(_gameQs));
+      localStorage.setItem(`_nd_set_${_activeSub}_${_activeSetObject.set_name}`, JSON.stringify(_qDurations));
     }
     if (_activeSetObject._url) {
       localStorage.setItem(`_nc_url_${_activeSetObject._url}`, JSON.stringify(rec));
       localStorage.setItem(`_nr_url_${_activeSetObject._url}`, JSON.stringify(_userResponses));
       localStorage.setItem(`_nq_url_${_activeSetObject._url}`, JSON.stringify(_gameQs));
+      localStorage.setItem(`_nd_url_${_activeSetObject._url}`, JSON.stringify(_qDurations));
     }
   }
 
@@ -8009,19 +8055,23 @@ function buildReview(f){
   list.innerHTML = '';
   
   let rs = _userResponses || [];
-  if (f === 'correct') rs = rs.filter(r => r.ic);
-  else if (f === 'wrong') rs = rs.filter(r => !r.ic && !r.skipped && r.picked !== -1);
-  else if (f === 'skipped') rs = rs.filter(r => r.skipped || (r.picked === -1 && !r.ic));
+  if (f === 'correct') {
+    rs = rs.filter(r => r.ic);
+  } else if (f === 'wrong') {
+    rs = rs.filter(r => !r.ic && !r.skipped && r.picked !== -1);
+  } else if (f === 'skipped') {
+    rs = rs.filter(r => r.skipped === true || r.picked === -1 || (!r.ic && !r.picked && r.picked !== 0));
+  }
   
   if (!rs.length) { 
-    list.innerHTML = `<div class="loading-text">No ${f} answers.</div>`; 
+    list.innerHTML = `<div class="loading-text">No ${f} answers found.</div>`; 
     return; 
   }
   
   rs.forEach(r => {
     const q = _gameQs[r.qi]; 
     if (!q) return;
-    const isS = r.skipped || (r.picked === -1 && !r.ic);
+    const isS = r.skipped === true || r.picked === -1 || (!r.ic && !r.picked && r.picked !== 0);
     const cc = r.ic ? 'c' : isS ? 's' : 'w'; 
     const ct = r.ic ? '✔ Correct' : isS ? '⏭ Skipped' : '✘ Wrong';
     
@@ -8044,7 +8094,7 @@ function buildReview(f){
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="rev-chip ${cc}">${ct}</span>
-            <button class="bm-btn ${isStarred ? 'on' : ''}" onclick="toggleReviewBookmark(${r.qi}, this)" aria-label="Star Question" style="width:30px; height:30px;">
+            <button type="button" class="bm-btn ${isStarred ? 'on' : ''}" onclick="toggleReviewBookmark(${r.qi}, this)" aria-label="Star Question" style="width:30px; height:30px;">
               <svg class="bm-star-icon" width="15" height="15" viewBox="0 0 24 24" fill="${isStarred ? '#fbbf24' : 'none'}" stroke="${isStarred ? '#fbbf24' : 'currentColor'}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
